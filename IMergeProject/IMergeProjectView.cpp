@@ -1,0 +1,748 @@
+// DeepikaProjectView.cpp : implementation of the IMergeProjectView class
+//
+
+#include "stdafx.h"
+#include "IMergeProject.h"
+
+#include "IMergeProjectDoc.h"
+#include "IMergeProjectView.h"
+#include "XLComparator.h"
+#include "CEditDialogBox.h"
+#include "CommonHeader.h"
+#include "AskBeforeExit.h"
+
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+
+// IMergeProjectView
+
+IMPLEMENT_DYNCREATE(IMergeProjectView, CView)
+
+BEGIN_MESSAGE_MAP(IMergeProjectView, CView)
+	// Standard printing commands
+	//ON_COMMAND(ID_FILE_PRINT, &CView::OnFilePrint)
+	//ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
+	//ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CView::OnFilePrintPreview)
+	//ON_COMMAND(ID_LOAD_FILE_ONE, &IMergeProjectView::OnLoadFileOne)
+	//ON_COMMAND(ID_LOAD_FILE_TWO, &IMergeProjectView::OnLoadFileTwo)
+	ON_COMMAND(ID_FILE_COMPARE, &IMergeProjectView::OnFileCompare)
+	//ON_COMMAND(ID_SETTING_SETBASEROW, &IMergeProjectView::OnSettingSetbaserow)
+	//ON_COMMAND(ID_SETTING_MERGE, &IMergeProjectView::OnSettingMerge)
+	ON_COMMAND(ID_NEXT_DIFF,   &IMergeProjectView::OnNextDifference)// ID_NEXT_DIFF
+	ON_COMMAND(ID_PREVIOUS_DIFF,   &IMergeProjectView::OnPreviousDifference) // ID_PREVIOUS_DIFF
+	ON_COMMAND(ID_SHOW_DIFF,   &IMergeProjectView::OnShowDifferenceOnly) //ID_SHOW_DIFF
+	ON_COMMAND(ID_SHOWSAME_ONLY,   &IMergeProjectView::OnShowSameOnly) //
+	ON_COMMAND(ID_SHOW_ALL,   &IMergeProjectView::OnShowAll)//ON_WM_PAINT()
+	ON_COMMAND(ID_MOVERIGHT,   &IMergeProjectView::OnMoveRight)
+    ON_COMMAND(ID_MOVELEFT,   &IMergeProjectView::OnMoveLeft)
+	ON_WM_CREATE()
+	//ON_WM_CLOSE()
+	ON_WM_DESTROY()
+	ON_COMMAND(ID_FILE_SAVE, &IMergeProjectView::OnFileSave)
+	ON_BN_CLICKED(IDC_LOAD_FILEA, &IMergeProjectView::OnLoadFileOne)
+	ON_BN_CLICKED(IDC_LOAD_FILEB, &IMergeProjectView::OnLoadFileTwo)
+	ON_BN_CLICKED(IDC_SHIFT_BUTTON_LEFT1, &IMergeProjectView::OnLeftArrow)
+	ON_BN_CLICKED(IDC_SHIFT_BUTTON_RIGHT, &IMergeProjectView::OnRightArrow)
+	ON_COMMAND(ID_FIND,   &IMergeProjectView::OnFindUserString)
+	ON_COMMAND(	WM_MODELESS_CLOSED, &IMergeProjectView::OnFindClosed)
+	ON_COMMAND(ID_FIND_NEXT, &IMergeProjectView::OnFindNextUserString)
+	ON_COMMAND(ID_FIND_PREV, &IMergeProjectView::OnFindPrevUserString	)
+	ON_WM_LBUTTONDOWN()
+	
+	ON_COMMAND(ID_EDIT_UNDO, &IMergeProjectView::OnEditUndo)
+END_MESSAGE_MAP()
+
+// IMergeProjectView construction/destruction
+
+static char BASED_CODE szFilter[] = "Worksheet Files (*.xls / *.xlsx)|*.xls||*.xlsx||";
+
+IMergeProjectView::IMergeProjectView(): 
+m_pCreator(0),
+m_bLoadFileA(false),
+m_bLoadFileB(false),
+m_iMode(FirstModeStartView),
+m_Utility(NULL),
+m_CompareDlg(NULL),
+m_SaveDialog(NULL),
+m_AskBeforeExitDlg(NULL),
+m_FindDlg(NULL)
+{
+	// TODO: add construction code here
+	m_DiffIndicator[0] = NULL;
+	m_DiffIndicator[1] = NULL;
+	m_Utility = XLUtility::GetInstance(this);
+}
+
+IMergeProjectView::~IMergeProjectView()
+{
+	DestroyGrid();
+}
+
+BOOL IMergeProjectView::PreCreateWindow(CREATESTRUCT& cs)
+{
+	// TODO: Modify the Window class or styles here by modifying
+	//  the CREATESTRUCT cs
+	return CView::PreCreateWindow(cs);
+}
+
+void IMergeProjectView::OnActivateView(BOOL bActivate, CView* pActivateView,
+					CView* pDeactiveView)
+{
+	CView::OnActivateView(bActivate,pActivateView,pDeactiveView);    
+}
+
+// IMergeProjectView drawing
+
+void IMergeProjectView::OnDraw(CDC* pDC)
+{
+	IMergeProjectDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (!pDoc)
+		return;
+
+	//RECT rect;
+	//rect.top = 20;
+//	rect.bottom = 100;
+	//rect.left = 09
+   // rect.right = 30
+//
+//	CBrush brush(DARKSLATEGRAYCOL);
+
+	//pDC->FillRect(&rect, &brush);
+
+
+	// TODO: add draw code for native data here	  
+	
+}
+
+
+// IMergeProjectView printing
+
+BOOL IMergeProjectView::OnPreparePrinting(CPrintInfo* pInfo)
+{
+	// default preparation
+	return DoPreparePrinting(pInfo);
+}
+
+void IMergeProjectView::OnBeginPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+{
+	// TODO: add extra initialization before printing
+}
+
+void IMergeProjectView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+{
+	// TODO: add cleanup after printing
+}
+
+void IMergeProjectView::OnSize(UINT nType, int cx, int cy) 
+{
+	XL_UTIL->SetWindowDim(cx, cy);
+}
+
+// IMergeProjectView diagnostics
+
+#ifdef _DEBUG
+void IMergeProjectView::AssertValid() const
+{
+	CView::AssertValid();
+}
+
+void IMergeProjectView::Dump(CDumpContext& dc) const
+{
+	CView::Dump(dc);
+}
+
+IMergeProjectDoc* IMergeProjectView::GetDocument() const // non-debug version is inline
+{
+	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(IMergeProjectDoc)));
+	return (IMergeProjectDoc*)m_pDocument;
+}
+#endif //_DEBUG
+
+int IMergeProjectView::OnCreate(LPCREATESTRUCT lpcs)
+{
+	int ret = CView::OnCreate(lpcs);
+	CreatePathBox();
+	CreateGrid();
+	return ret;
+}
+
+void IMergeProjectView::CreateGrid()
+{
+	if(m_pCreator)
+	{
+		delete m_pCreator;
+		m_pCreator = 0;
+	}
+	if(m_DiffIndicator[0])
+	{
+		delete m_DiffIndicator[0];
+		m_DiffIndicator[0] = 0;
+	}
+	if(m_DiffIndicator[1])
+	{
+		delete m_DiffIndicator[1];
+		m_DiffIndicator[1] = 0;
+	}
+	int partitions[2] = {0, 0};
+	int width = 0;
+	XLUtility::GetInstance()->VerticallyDivideArea(2, partitions, width);
+	if(!m_pCreator)
+	{
+		m_pCreator = GridTableCompareView::GetInstance();
+		m_pCreator->SetParent(this);
+		m_pCreator->CreateEmptyGrid();
+		m_DiffIndicator[0] = new CDifferencePointer(m_pCreator, DiffPointerLeftType);
+		m_DiffIndicator[0]->Initialize(this);
+		m_DiffIndicator[0]->SetPosition(partitions[0] - DIFF_POINTER_BUTTON_W, DIFF_POINTER_BUTTON_Y);
+		m_DiffIndicator[0]->Hide();
+
+		m_DiffIndicator[1] = new CDifferencePointer(m_pCreator, DiffPointerRightType);
+		m_DiffIndicator[1]->Initialize(this);
+		m_DiffIndicator[1]->SetPosition(partitions[1] + width, DIFF_POINTER_BUTTON_Y);
+		m_DiffIndicator[1]->Hide();
+	}
+}
+
+void IMergeProjectView::DestroyGrid()
+{		
+	if(m_DiffIndicator[0])
+	{
+		delete m_DiffIndicator[0];
+		m_DiffIndicator[0] = 0;
+	}
+	if(m_DiffIndicator[1])
+	{
+		delete m_DiffIndicator[1];
+		m_DiffIndicator[1] = 0;
+	}
+	if(m_pCreator)
+	{
+		//delete m_pCreator;
+		m_pCreator = 0;
+	}
+	m_bLoadFileA = false;
+	m_bLoadFileB = false;
+}
+
+void IMergeProjectView::CreatePathBox()
+{
+	static UINT uint  = 90001;
+	RECT myrect;
+	myrect.top = 0;
+	myrect.bottom = FIRST_TABLE_Y;
+
+	int iTableWidth = 0;
+	int partitions[2];
+	XL_UTIL->VerticallyDivideArea(2, partitions, iTableWidth);
+	iTableWidth -= LOAD_BTN_W + 10;
+
+	CRect Btnrect;
+	Btnrect.top = 0;
+	Btnrect.bottom = LOAD_BTN_H;
+	int buttonIDs[2] = {IDC_LOAD_FILEA, IDC_LOAD_FILEB}; 
+
+	for(int i = 0; i < 2; i++)
+	{	
+		myrect.left = partitions[i];
+		myrect.right = myrect.left + iTableWidth;
+		m_PathTxtBox[i].Create(this, myrect, (i == 0));
+
+		
+		Btnrect.left = myrect.right;
+		Btnrect.right = Btnrect.left + LOAD_BTN_W;
+		m_PathBtns[i].Create(NULL, WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, Btnrect, this, buttonIDs[i]);
+		m_PathBtns[i].LoadBitmaps(IDB_BITMAP_FILELOAD, IDB_BITMAP_FILELOAD_S, IDB_BITMAP_FILE_LOAD_F);
+		m_PathBtns[i].ShowWindow(SW_SHOW);
+		
+	}  	
+
+}
+
+
+
+// IMergeProjectView message handlers
+
+void IMergeProjectView::OnLoadFileOne()
+{
+	
+	std::string s(szFilter);
+	std::wstring w(s.begin(), s.end());
+	CFileDialog dialog(true, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+		(LPCTSTR)w.c_str());
+	if(dialog.DoModal() == IDOK)
+	{
+		m_pathOne = CW2A(dialog.GetPathName().GetString());
+		m_bLoadFileA = true;
+		FileLoaded(0);
+		m_PathTxtBox[0].SetText(m_pathOne);
+		
+		if(m_CompareDlg)
+			delete m_CompareDlg;
+		m_CompareDlg = new OnCompDialogBox(this);
+		if(m_CompareDlg->CreateDlg(this) == TRUE)
+		{
+			m_CompareDlg->ShowWindow(SW_SHOW);
+			std::string loading("Loading File :");
+			loading += m_pathOne;
+			m_CompareDlg->SetDesc(loading);
+			m_pCreator->LoadTableA(m_pathOne);
+
+			delete m_CompareDlg;
+			m_CompareDlg = 0;
+		}
+	}
+	// TODO: Add your command handler code here
+}
+
+void IMergeProjectView::OnLoadFileTwo()
+{
+	std::string s(szFilter);
+	std::wstring w(s.begin(), s.end());
+	CFileDialog dialog(true, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+		(LPCTSTR)w.c_str());
+	if(dialog.DoModal() == IDOK)
+	{
+		m_pathTwo = CW2A(dialog.GetPathName().GetString());	
+		m_bLoadFileB = true;
+		FileLoaded(1);
+		m_PathTxtBox[1].SetText(m_pathTwo);
+
+		if(m_CompareDlg)
+			delete m_CompareDlg;
+		m_CompareDlg = new OnCompDialogBox(this);
+		if(m_CompareDlg->CreateDlg(this) == TRUE)
+		{
+			m_CompareDlg->ShowWindow(SW_SHOW);
+			std::string loading("Loading File: ");
+			loading += m_pathTwo;
+			m_CompareDlg->SetDesc(loading);
+			m_pCreator->LoadTableB(m_pathTwo);
+
+			delete m_CompareDlg;
+			m_CompareDlg = 0;
+		}
+	}
+	// TODO: Add your command handler code here
+}
+
+void IMergeProjectView::FileLoaded(int fileNum)
+{
+	if(fileNum == 0)
+	{
+		CSettingsSM::GetInstance()->StateAchieved(FILE_A_LOADED);
+	}
+	else
+	{
+		CSettingsSM::GetInstance()->StateAchieved(FILE_B_LOADED);
+	}
+
+	if(GetFlag(COMPARE_START_ENB))
+	{
+		//Get
+	}
+}
+
+void IMergeProjectView::OnFileCompare()
+{
+	try
+	{
+		if(GetFlag(COMPARE_START_ENB))
+		{
+
+			if(m_pCreator)
+			{
+				//Hide all the windows
+				m_DiffIndicator[0]->Hide();
+				m_DiffIndicator[1]->Hide();
+				if(m_CompareDlg)
+					delete m_CompareDlg;
+				m_CompareDlg = new OnCompDialogBox(this);
+				if(m_CompareDlg->CreateDlg(this) == TRUE)
+				{
+					m_CompareDlg->ShowWindow(SW_SHOW);
+					std::string loading("Creating Data Structure and Comparing files. Please Wait");
+					m_CompareDlg->SetDesc(loading);
+					//m_CompareDlg.StartWait();
+					m_pCreator->Clear();
+					m_pCreator->Load();
+					m_pCreator->CreateTable();
+					m_pCreator->Compare();
+					CSettingsSM::GetInstance()->StateAchieved(COMPARE_DONE);
+
+					//m_CompareDlg->ShowWindow(SW_HIDE);
+					delete m_CompareDlg;
+					m_CompareDlg = 0;
+				}
+			}
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Unable to compare files");
+	}
+}
+
+void IMergeProjectView::OnSettingSetbaserow()
+{
+	try
+	{
+		CEditDialogBox dialogB;
+		std::string str("stackoverflow");
+		CString cstr(str.c_str());
+		dialogB.SetValue(cstr);
+		dialogB.Create(IDC_EDITBOX_EBR,this);
+		dialogB.ShowWindow(SW_SHOW);
+
+		CString response = dialogB.GetValue();
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Not able to open the dialog box");
+	}
+	// TODO: Add your command handler code here
+}
+
+void IMergeProjectView::OnSettingMerge()
+{
+	// TODO: Add your command handler code here
+	return;
+}
+
+void IMergeProjectView::OnPaint()
+{
+	CPaintDC dc(this); // device context for painting
+	// TODO: Add your message handler code here
+	// Do not call CView::OnPaint() for painting messages
+	//if(m_iMode == CompareModeView)
+	{
+		//CreateGrid();
+		//OnFileCompare();
+	}
+	//else if(m_iMode == MergeModeView)
+	{
+		//OnSettingMerge();
+	}
+}
+
+
+void IMergeProjectView::OnFileSave()
+{
+	// TODO: Add your command handler code here
+	try
+	{
+		m_SaveDialog = new CSaveDialog(this);
+		if(m_SaveDialog)
+		{
+			if(m_SaveDialog->DoModal() == IDOK)
+			{
+				if(m_CompareDlg)
+					delete m_CompareDlg;
+				m_CompareDlg = new OnCompDialogBox(this);
+				BOOL bRet = m_CompareDlg->CreateDlg(this);
+				if(bRet == TRUE)
+				{
+					m_CompareDlg->ShowWindow(SW_SHOW);
+					std::string loading("Saving Files. Please Wait");
+					m_CompareDlg->SetDesc(loading);
+				}
+				if(m_SaveDialog->IsAll())
+				{
+					if(m_pCreator)
+					{
+						m_pCreator->SaveInFiles();
+					}
+				}
+				else if(m_SaveDialog->IsRight())
+				{
+					if(m_pCreator)
+					{
+						m_pCreator->SaveFileB();
+					}
+				}
+				else if(m_SaveDialog->IsLeft())
+				{
+					if(m_pCreator)
+					{
+						m_pCreator->SaveFileA();
+					}
+				}
+				if(bRet == TRUE)
+				{
+					delete m_CompareDlg;
+					m_CompareDlg = 0;
+				}
+				
+			}
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Not able to save files");
+	}
+}
+
+
+void IMergeProjectView::OnNextDifference()
+{
+	try
+	{
+		if(m_pCreator && GetFlag(SHOW_DIFF_ITR_FLAG))
+		{
+			m_pCreator->NextDifference();
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Cannot go to next difference");
+	}
+}
+
+
+void IMergeProjectView::OnShowDifferenceOnly()
+{
+	try
+	{
+		if(m_pCreator && GetFlag(SHOW_ONLY_DIFF_FLAG))
+		{
+			m_pCreator->CreateDiffTable();
+			CSettingsSM::GetInstance()->StateAchieved(SHOW_ONLY_DIFF);
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Cannot show different view");
+	}
+}
+
+
+
+void IMergeProjectView::OnShowSameOnly()
+{
+	try
+	{
+		if(m_pCreator && GetFlag(SHOW_SAME_FLAG))
+		{
+			m_pCreator->CreateSameTable();
+			CSettingsSM::GetInstance()->StateAchieved(SHOW_SAME);
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Cannot show same view");
+	}
+}
+
+
+void IMergeProjectView::OnPreviousDifference()
+{
+	try
+	{
+		if(m_pCreator && GetFlag(SHOW_DIFF_ITR_FLAG))
+		{
+			m_pCreator->PrevDifference();
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Cannot go to previous difference");
+	}
+}
+
+void IMergeProjectView::OnShowAll()
+{
+	try
+	{
+		if(m_pCreator && GetFlag(SHOW_ALL_FLAG))
+		{
+			m_pCreator->CreateAllTable();
+			CSettingsSM::GetInstance()->StateAchieved(SHOW_ALL);
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Cannot show all view");
+	}
+}
+
+void IMergeProjectView::OnMoveRight()
+{
+	try
+	{
+		if(m_pCreator && GetFlag(COMPARED_FILE_FLAG))
+		{
+			m_pCreator->ICopyLeftToRight();
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Error in Copying data");
+	}
+}
+
+void IMergeProjectView::OnMoveLeft()
+{
+	try
+	{
+		if(m_pCreator && GetFlag(COMPARED_FILE_FLAG))
+		{
+			m_pCreator->ICopyRightToLeft();
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Error in Copying data");
+	}
+}
+
+
+void IMergeProjectView::OnLeftArrow()
+{
+	try
+	{
+
+		if(m_pCreator && GetFlag(COMPARED_FILE_FLAG))
+		{
+			m_pCreator->LineCopyLeftToRight();
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Error in Copying data");
+	}
+}
+
+void IMergeProjectView::OnRightArrow()
+{
+	try
+	{
+		if(m_pCreator && GetFlag(COMPARED_FILE_FLAG))
+		{
+			m_pCreator->LineCopyRightToLeft();
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Error in Copying data");
+	}
+}
+
+void IMergeProjectView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	try
+	{
+		int X = point.x;
+		int Y = point.y;
+		if(m_pCreator && GetFlag(COMPARED_FILE_FLAG))
+		{
+			m_pCreator->ArrowPosition(X, Y);
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Error in mouse move");
+	}
+
+}
+
+void IMergeProjectView::OnDestroy()
+{
+	try
+	{
+		bool left = m_PathTxtBox[0].IsDirty();
+		bool right = m_PathTxtBox[0].IsDirty();
+		if(left || right)
+		{
+			if(	m_AskBeforeExitDlg)
+				delete m_AskBeforeExitDlg;
+			m_AskBeforeExitDlg = NULL;
+
+			m_AskBeforeExitDlg = new CAskBeforeExit(this);
+			if(m_AskBeforeExitDlg)
+			{
+				if(m_AskBeforeExitDlg->DoModal() == IDOK)
+				{
+					OnFileSave();
+				}
+
+				if(	m_AskBeforeExitDlg)
+				delete m_AskBeforeExitDlg;
+				m_AskBeforeExitDlg = NULL;
+			}
+
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"There were some changes in the opened files. But they could not be saved");
+	}
+}
+void IMergeProjectView::OnFindNextUserString()
+{
+	if(m_pCreator && GetFlag(COMPARED_FILE_FLAG))
+	{
+		std::wstring wstr = CSettingsSM::GetInstance()->GetUserString();
+		m_pCreator->FindForward(wstr);
+	}
+}
+
+void IMergeProjectView::OnFindPrevUserString()
+{
+	if(m_pCreator && GetFlag(COMPARED_FILE_FLAG))
+	{
+		std::wstring wstr = CSettingsSM::GetInstance()->GetUserString();
+		m_pCreator->FindBackward(wstr);
+	}
+}
+
+void IMergeProjectView::OnFindUserString()
+{
+	try
+	{
+		if(	m_FindDlg)
+			delete m_FindDlg;
+		m_FindDlg = NULL;
+
+		m_FindDlg = new CFindItemDlg(this);
+		if(m_FindDlg)
+		{
+			if(m_FindDlg->DoModal() == IDOK)
+			{
+				if(m_pCreator && GetFlag(COMPARED_FILE_FLAG))
+				{
+					std::wstring wstr = CSettingsSM::GetInstance()->GetUserString(); 					
+					m_pCreator->Find(wstr);
+				}
+			}
+
+			if(	m_FindDlg)
+			delete m_FindDlg;
+			m_FindDlg = NULL;
+		}
+	}
+	catch(...)
+	{
+	}
+}
+
+void IMergeProjectView::OnFindClosed()
+{
+	m_FindDlg = 0;
+}
+void IMergeProjectView::OnEditUndo()
+{
+	// TODO: Add your command handler code here
+	try
+	{
+		if(m_pCreator)
+		{
+			m_pCreator->UndoChanges();
+		}
+	}
+	catch(...)
+	{
+	} 
+}
