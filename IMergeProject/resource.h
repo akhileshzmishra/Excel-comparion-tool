@@ -25,6 +25,8 @@
 #define IDD_DIALOG_ASK_EXIT             152
 #define IDD_FIND_DLG                    153
 #define IDI_ICON1                       154
+#define IDB_BITMAP1                     155
+#define IDB_BITMAP_TOOLTIPBTN_LOAD      155
 #define IDC_EDITBOX_EBR                 1000
 #define IDC_EDIT1                       1001
 #define IDC_EDIT2                       1002
@@ -84,7 +86,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        155
+#define _APS_NEXT_RESOURCE_VALUE        156
 #define _APS_NEXT_COMMAND_VALUE         32818
 #define _APS_NEXT_CONTROL_VALUE         1016
 #define _APS_NEXT_SYMED_VALUE           102

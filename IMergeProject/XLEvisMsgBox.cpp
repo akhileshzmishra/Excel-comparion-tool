@@ -81,7 +81,7 @@ void CXLEvisMsgBox::RunProgram()
 
 void CXLEvisMsgBox::StartWait()
 {
-	XLSimpleThreads::RunSimpleThread(this);
+	//XLSimpleThreads::RunSimpleThread(this);
 }
 
 

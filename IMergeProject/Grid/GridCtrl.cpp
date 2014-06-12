@@ -197,8 +197,8 @@ UINT GetMouseScrollLines()
 /////////////////////////////////////////////////////////////////////////////
 // CGridCtrl
 
-CGridCtrl::CGridCtrl(ScrollSubject* subject, int nRows, int nCols, int nFixedRows, int nFixedCols)	:
-ScrollObserver(subject, (XLEventType*)RegisterConditions, (sizeof(RegisterConditions)/sizeof(XLEventType)))
+CGridCtrl::CGridCtrl(XLCtrlSubject* subject, int nRows, int nCols, int nFixedRows, int nFixedCols)	:
+XLCtrlObserver(subject, (XLEventType*)RegisterConditions, (sizeof(RegisterConditions)/sizeof(XLEventType)))
 {
     RegisterWindowClass();
 
@@ -1377,7 +1377,7 @@ void CGridCtrl::OnEndInPlaceEdit(NMHDR* pNMHDR, LRESULT* pResult)
 //Start
 //---------------------
 
-void CGridCtrl::DoHScroll(ScrollData data)
+void CGridCtrl::DoHScroll(XLObservedData data)
 {
 	 EndEditing();
 
@@ -1500,7 +1500,7 @@ void CGridCtrl::DoHScroll(ScrollData data)
         break;
     }
 }
-void CGridCtrl::DoVScroll(ScrollData data)
+void CGridCtrl::DoVScroll(XLObservedData data)
 {
 	int nSBCode = data.Data;
 	 EndEditing();
@@ -1729,7 +1729,7 @@ void CGridCtrl::SelectRow(int r)
 	SetFocusCell(CCellID(r, 0));
 	SelectRows(CCellID(r, 0), TRUE, TRUE);
 }
-void CGridCtrl::Notify(ScrollData* data, XLEventType* type)
+void CGridCtrl::Notify(XLObservedData* data, XLEventType* type)
 {
 	if(!data)
 	{
@@ -1759,7 +1759,7 @@ void CGridCtrl::Notify(ScrollData* data, XLEventType* type)
 // Handle vert scrollbar notifications
 void CGridCtrl::OnVScroll(UINT nSBCode, UINT /*nPos*/, CScrollBar* /*pScrollBar*/)
 {
-	ScrollData data;
+	XLObservedData data;
 	data.Data = nSBCode;
 	data.EventType = GRID_VSCROLL; 
 	int scrollPos = 0;
@@ -1785,7 +1785,7 @@ void CGridCtrl::OnVScroll(UINT nSBCode, UINT /*nPos*/, CScrollBar* /*pScrollBar*
 // Handle horz scrollbar notifications
 void CGridCtrl::OnHScroll(UINT nSBCode, UINT /*nPos*/, CScrollBar* /*pScrollBar*/)
 {
-    ScrollData data;
+    XLObservedData data;
 	data.Data = nSBCode;
 	data.EventType = GRID_HSCROLL; 
 	int scrollPos = 0;
@@ -1810,7 +1810,7 @@ void CGridCtrl::OnHScroll(UINT nSBCode, UINT /*nPos*/, CScrollBar* /*pScrollBar*
 
 void CGridCtrl::CopyFromRightToLeft()
 {
-	ScrollSubject* subject = dynamic_cast<ScrollSubject*>( GetSubject());
+	XLCtrlSubject* subject = dynamic_cast<XLCtrlSubject*>( GetSubject());
 	CCellRange cid = GetSelectedCellRange();
 	if(subject)
 	{
@@ -1821,7 +1821,7 @@ void CGridCtrl::CopyFromRightToLeft()
 
 void CGridCtrl::CopyFromLeftToRight()
 {
-	ScrollSubject* subject = dynamic_cast<ScrollSubject*>( GetSubject());
+	XLCtrlSubject* subject = dynamic_cast<XLCtrlSubject*>( GetSubject());
 	CCellRange cid = GetSelectedCellRange();
 	if(subject)
 	{
@@ -2524,6 +2524,15 @@ void CGridCtrl::OnSelecting(const CCellID& currentCell)
     // EFW - Bug fix [REMOVED CJM: this will cause infinite loop in list mode]
     // SetFocusCell(max(currentCell.row, m_nFixedRows), max(currentCell.col, m_nFixedCols));
 }
+void CGridCtrl::SaveToModelDB(int r, int c, CString& str)
+{
+	XLCtrlSubject* subject = dynamic_cast<XLCtrlSubject*>(GetSubject());
+	if(subject)
+	{
+		subject->SaveToDatabase(r, c, str);
+	}
+}
+
 
 void CGridCtrl::ValidateAndModifyCellContents(int nRow, int nCol, LPCTSTR strText)
 {
@@ -2541,6 +2550,9 @@ void CGridCtrl::ValidateAndModifyCellContents(int nRow, int nCol, LPCTSTR strTex
             {
                 SetModified(TRUE, nRow, nCol);
                 RedrawCell(nRow, nCol);
+
+				CString txt = strText;
+				SaveToModelDB(nRow, nCol, txt);
             }
             else
             {
@@ -6147,7 +6159,7 @@ CPoint CGridCtrl::GetPointClicked(int nRow, int nCol, const CPoint& point)
 void CGridCtrl::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
     TRACE0("CGridCtrl::OnLButtonDblClk\n");
-	m_SetCurrentObserver();
+	SetThisObserverCurrent();
     CCellID cell = GetCellFromPt(point);
     if( !IsValid( cell) )
     {
@@ -6258,9 +6270,9 @@ void CGridCtrl::OnLButtonDblClk(UINT nFlags, CPoint point)
     CWnd::OnLButtonDblClk(nFlags, point);
 }
 //ISHA ------> START
-void CGridCtrl::m_SetCurrentObserver()
+void CGridCtrl::SetThisObserverCurrent()
 {
-	ScrollSubject* subject = dynamic_cast<ScrollSubject*>(GetSubject());
+	XLCtrlSubject* subject = dynamic_cast<XLCtrlSubject*>(GetSubject());
 	if(subject)
 	{
 		subject->SetCurrentObserver(this);
@@ -6309,7 +6321,7 @@ void CGridCtrl::OnLButtonDown(UINT nFlags, CPoint point)
         pCell->OnClickDown(GetPointClicked( m_LeftClickDownCell.row, m_LeftClickDownCell.col, point));
 	
 	Clicked(m_LeftClickDownCell); //calling notify function
-	m_SetCurrentObserver();
+	SetThisObserverCurrent();
 
     // Clicked in the text area? Only then will cell selection work
     BOOL bInTextArea = FALSE;
@@ -6753,7 +6765,7 @@ void CGridCtrl::OnRButtonDown(UINT nFlags, CPoint point)
 {
     //CWnd::OnRButtonDown(nFlags, point);
 	m_bRMouseButtonDown = TRUE;
-	m_SetCurrentObserver();
+	SetThisObserverCurrent();
 #ifdef GRIDCONTROL_USE_TITLETIPS
 	TRACE0("Hiding TitleTip\n");
     m_TitleTip.Hide();  // hide any titletips
@@ -6773,7 +6785,7 @@ void CGridCtrl::OnRButtonUp(UINT nFlags, CPoint point)
     FocusCell = GetCellFromPt(point);
 
     EndEditing();        // Auto-destroy any InPlaceEdit's
-	m_SetCurrentObserver();
+	SetThisObserverCurrent();
     // If not a valid cell, pass -1 for row and column
     if(!IsValid(FocusCell))
         SendMessageToParent(-1, -1, NM_RCLICK);
@@ -7812,11 +7824,7 @@ void CGridCtrl::OnEndEditCell(int nRow, int nCol, CString str)
 
 	if (strCurrentText != str)
     {
-		ScrollSubject* subject = dynamic_cast<ScrollSubject*>(GetSubject());
-		if(subject)
-		{
-			subject->SaveToDatabase(nRow, nCol, str);
-		}
+		SaveToModelDB(nRow, nCol, str);
 	}
 
 	

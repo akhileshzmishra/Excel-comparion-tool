@@ -96,27 +96,29 @@ void IMergeProjectView::OnActivateView(BOOL bActivate, CView* pActivateView,
 
 // IMergeProjectView drawing
 
+
 void IMergeProjectView::OnDraw(CDC* pDC)
 {
-	IMergeProjectDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-	if (!pDoc)
-		return;
-
-	//RECT rect;
-	//rect.top = 20;
-//	rect.bottom = 100;
-	//rect.left = 09
-   // rect.right = 30
-//
-//	CBrush brush(DARKSLATEGRAYCOL);
-
-	//pDC->FillRect(&rect, &brush);
-
-
-	// TODO: add draw code for native data here	  
 	
 }
+
+void IMergeProjectView::OnDraw1(CDC* pDC, int top, int bottom)
+{
+	RECT rect;
+	rect.top = top;
+    rect.bottom = top + 1;
+	rect.left = 00;
+    rect.right = 20;
+
+	CBrush brush(DARKREDCOL);
+
+	pDC->FillRect(&rect, &brush);
+
+   // TODO: add draw code for native data here	  
+	
+}
+
+	 
 
 
 // IMergeProjectView printing
@@ -164,10 +166,16 @@ IMergeProjectDoc* IMergeProjectView::GetDocument() const // non-debug version is
 
 int IMergeProjectView::OnCreate(LPCREATESTRUCT lpcs)
 {
-	int ret = CView::OnCreate(lpcs);
-	CreatePathBox();
+	int ret = CView::OnCreate(lpcs); 	
+	CreateSideBar();
 	CreateGrid();
+	CreatePathBox();
 	return ret;
+}
+
+void IMergeProjectView::CreateSideBar()
+{
+	m_SideBar.Create(this);
 }
 
 void IMergeProjectView::CreateGrid()
@@ -255,7 +263,9 @@ void IMergeProjectView::CreatePathBox()
 		Btnrect.left = myrect.right;
 		Btnrect.right = Btnrect.left + LOAD_BTN_W;
 		m_PathBtns[i].Create(NULL, WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, Btnrect, this, buttonIDs[i]);
-		m_PathBtns[i].LoadBitmaps(IDB_BITMAP_FILELOAD, IDB_BITMAP_FILELOAD_S, IDB_BITMAP_FILE_LOAD_F);
+		m_PathBtns[i].LoadBitmap(IDB_BITMAP_TOOLTIPBTN_LOAD);
+		CString text = L"Load a file";
+		m_PathBtns[i].SetToolTipText(&text);
 		m_PathBtns[i].ShowWindow(SW_SHOW);
 		
 	}  	
@@ -268,7 +278,7 @@ void IMergeProjectView::CreatePathBox()
 
 void IMergeProjectView::OnLoadFileOne()
 {
-	
+	bool bResult = false;
 	std::string s(szFilter);
 	std::wstring w(s.begin(), s.end());
 	CFileDialog dialog(true, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
@@ -276,7 +286,6 @@ void IMergeProjectView::OnLoadFileOne()
 	if(dialog.DoModal() == IDOK)
 	{
 		m_pathOne = CW2A(dialog.GetPathName().GetString());
-		m_bLoadFileA = true;
 		FileLoaded(0);
 		m_PathTxtBox[0].SetText(m_pathOne);
 		
@@ -286,13 +295,21 @@ void IMergeProjectView::OnLoadFileOne()
 		if(m_CompareDlg->CreateDlg(this) == TRUE)
 		{
 			m_CompareDlg->ShowWindow(SW_SHOW);
-			std::string loading("Loading File :");
+			std::string loading("Loading File :\n");
 			loading += m_pathOne;
 			m_CompareDlg->SetDesc(loading);
-			m_pCreator->LoadTableA(m_pathOne);
-
+			bResult = m_pCreator->LoadTableA(m_pathOne);
 			delete m_CompareDlg;
 			m_CompareDlg = 0;
+			m_bLoadFileA = bResult;
+			if(m_bLoadFileB&& m_bLoadFileA)
+			{
+				OnFileCompare();
+			}
+		}
+		if(!bResult)
+		{
+			AfxMessageBox(L"Unable to Open File. Please check :\n 1. Files must not be in read only mode.\n 2. Files must not be encrypted.\n 3. Files must not be opened.");
 		}
 	}
 	// TODO: Add your command handler code here
@@ -300,6 +317,7 @@ void IMergeProjectView::OnLoadFileOne()
 
 void IMergeProjectView::OnLoadFileTwo()
 {
+	bool bResult = false;
 	std::string s(szFilter);
 	std::wstring w(s.begin(), s.end());
 	CFileDialog dialog(true, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
@@ -307,7 +325,6 @@ void IMergeProjectView::OnLoadFileTwo()
 	if(dialog.DoModal() == IDOK)
 	{
 		m_pathTwo = CW2A(dialog.GetPathName().GetString());	
-		m_bLoadFileB = true;
 		FileLoaded(1);
 		m_PathTxtBox[1].SetText(m_pathTwo);
 
@@ -317,13 +334,21 @@ void IMergeProjectView::OnLoadFileTwo()
 		if(m_CompareDlg->CreateDlg(this) == TRUE)
 		{
 			m_CompareDlg->ShowWindow(SW_SHOW);
-			std::string loading("Loading File: ");
+			std::string loading("Loading File :\n");
 			loading += m_pathTwo;
 			m_CompareDlg->SetDesc(loading);
-			m_pCreator->LoadTableB(m_pathTwo);
-
+			bResult = m_pCreator->LoadTableB(m_pathTwo);
 			delete m_CompareDlg;
 			m_CompareDlg = 0;
+			m_bLoadFileB = bResult;
+			if(m_bLoadFileB&& m_bLoadFileA)
+			{
+				OnFileCompare();
+			}
+		}
+		if(!bResult)
+		{
+			AfxMessageBox(L"Unable to Open File. Please check :\n 1. Files must not be in read only mode.\n 2. Files must not be encrypted.\n 3. Files must not be opened.");
 		}
 	}
 	// TODO: Add your command handler code here
@@ -348,11 +373,12 @@ void IMergeProjectView::FileLoaded(int fileNum)
 
 void IMergeProjectView::OnFileCompare()
 {
+	bool bResult = false;
+	CompareResult cResult = CompareResult_Unsuccessful;
 	try
 	{
 		if(GetFlag(COMPARE_START_ENB))
-		{
-
+		{ 
 			if(m_pCreator)
 			{
 				//Hide all the windows
@@ -364,25 +390,36 @@ void IMergeProjectView::OnFileCompare()
 				if(m_CompareDlg->CreateDlg(this) == TRUE)
 				{
 					m_CompareDlg->ShowWindow(SW_SHOW);
-					std::string loading("Creating Data Structure and Comparing files. Please Wait");
+					std::string loading("Creating Data Structure and Comparing files.\n Please Wait");
 					m_CompareDlg->SetDesc(loading);
 					//m_CompareDlg.StartWait();
 					m_pCreator->Clear();
-					m_pCreator->Load();
-					m_pCreator->CreateTable();
-					m_pCreator->Compare();
-					CSettingsSM::GetInstance()->StateAchieved(COMPARE_DONE);
-
+					bResult = m_pCreator->Load();
+					if(bResult)
+					{
+						m_pCreator->CreateTable();
+						cResult = m_pCreator->Compare();
+						Invalidate();
+						CSettingsSM::GetInstance()->StateAchieved(COMPARE_DONE);
+					}
 					//m_CompareDlg->ShowWindow(SW_HIDE);
 					delete m_CompareDlg;
 					m_CompareDlg = 0;
+				}
+				if(!bResult)
+				{
+					AfxMessageBox(L"Unable to compare files. \nPlease check if the files are in read only mode");
+				}
+				else if(cResult == CompareResult_Success_NoChange)
+				{
+					//AfxMessageBox(L"There are no changes in the files.");
 				}
 			}
 		}
 	}
 	catch(...)
 	{
-		AfxMessageBox(L"Unable to compare files");
+		AfxMessageBox(L"Unable to compare files. Error while comparing files");
 	}
 }
 
@@ -432,6 +469,7 @@ void IMergeProjectView::OnPaint()
 void IMergeProjectView::OnFileSave()
 {
 	// TODO: Add your command handler code here
+	bool IsSaved = false;
 	try
 	{
 		m_SaveDialog = new CSaveDialog(this);
@@ -453,21 +491,21 @@ void IMergeProjectView::OnFileSave()
 				{
 					if(m_pCreator)
 					{
-						m_pCreator->SaveInFiles();
+						IsSaved = m_pCreator->SaveInFiles();
 					}
 				}
 				else if(m_SaveDialog->IsRight())
 				{
 					if(m_pCreator)
 					{
-						m_pCreator->SaveFileB();
+						IsSaved = m_pCreator->SaveFileB();
 					}
 				}
 				else if(m_SaveDialog->IsLeft())
 				{
 					if(m_pCreator)
 					{
-						m_pCreator->SaveFileA();
+						IsSaved = m_pCreator->SaveFileA();
 					}
 				}
 				if(bRet == TRUE)
@@ -475,13 +513,17 @@ void IMergeProjectView::OnFileSave()
 					delete m_CompareDlg;
 					m_CompareDlg = 0;
 				}
-				
+				if(!IsSaved)
+				{
+					AfxMessageBox(L"Files could not be saved. Please check the path again.");
+				}				
 			}
+			
 		}
 	}
 	catch(...)
 	{
-		AfxMessageBox(L"Not able to save files");
+		AfxMessageBox(L"Files could not be saved. Please check the path again.");
 	}
 }
 
@@ -508,7 +550,11 @@ void IMergeProjectView::OnShowDifferenceOnly()
 	{
 		if(m_pCreator && GetFlag(SHOW_ONLY_DIFF_FLAG))
 		{
-			m_pCreator->CreateDiffTable();
+			CompareResult cResult = m_pCreator->CreateDiffTable();
+			if(cResult == CompareResult_Success_NoChange)
+			{
+				AfxMessageBox(L"There are no changes in the files.");
+			}
 			CSettingsSM::GetInstance()->StateAchieved(SHOW_ONLY_DIFF);
 		}
 	}

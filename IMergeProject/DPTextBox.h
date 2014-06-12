@@ -3,7 +3,7 @@
 #include "CommonHeader.h"
 #include "IProjectInterface.h"
 
-class DPTextBox	:   public CEdit, public ScrollObserver
+class DPTextBox	:   public CEdit, public XLCtrlObserver
 {
 	CString    m_String;
 	std::string m_str;
@@ -33,7 +33,7 @@ public:
 		return m_bIsDirty;
 	}
 
-	virtual void Notify(ScrollData* data, XLEventType* condition);
+	virtual void Notify(XLObservedData* data, XLEventType* condition);
 private:
 	void m_Create();
 	void m_SetDirty(bool set);

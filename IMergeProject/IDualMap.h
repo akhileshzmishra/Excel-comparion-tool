@@ -6,7 +6,7 @@
 template<class T, class X, class Fnt, class FnX>
 class DualMapItr;
 
-template<class T, class X, class FnT = std::less, class FnX = std::less>
+template<class T, class X, class FnT = std::less<T>, class FnX = std::less<X> >
 class DualMap
 {
 public:
@@ -44,7 +44,7 @@ public:
 	}
 	bool FindFirst(X& x, T& ret)
 	{
-		FirstItr itr = mSecond.find(x);
+		SecondItr itr = mSecond.find(x);
 		if(itr != mSecond.end())
 		{
 			ret = itr->second;
@@ -72,7 +72,7 @@ public:
 
 };
 
-template<class T, class X, class FnT, class FnX>
+template<class T, class X, class FnT = std::less<T>, class FnX = std::less<X> >
 class DualMapItr
 {
 	DualMap<T, X, FnT, FnX>*                   mMap;
@@ -134,11 +134,11 @@ public:
 		}
 		return (msitr == mMap->mSecond.begin());
 	}
-	T& GetFValue()
+	X& GetFValue()
 	{
 		return mfitr->second;
 	}
-	X& GetSValue()
+	T& GetSValue()
 	{
 		return msitr->second;
 	}

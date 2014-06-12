@@ -13,7 +13,7 @@ enum
 	ActionShow,
 	ActionHide
 };
-class CDifferencePointer : public CBitmapButton , public ScrollObserver
+class CDifferencePointer : public CBitmapButton , public XLCtrlObserver
 {
 	CView* mView;
 	bool  m_bCreate;
@@ -23,7 +23,7 @@ class CDifferencePointer : public CBitmapButton , public ScrollObserver
 	DECLARE_DYNAMIC(CDifferencePointer)
 
 public:
-	CDifferencePointer(ScrollSubject* subject, DiffPointerType type);
+	CDifferencePointer(XLCtrlSubject* subject, DiffPointerType type);
 	virtual ~CDifferencePointer();
 
 	void Initialize(CView* view = 0);
@@ -34,7 +34,7 @@ public:
 
 	void SetPosition(int x, int y);
 
-	void Notify(ScrollData* data, XLEventType* condition);
+	void Notify(XLObservedData* data, XLEventType* condition);
 
 	virtual void OnFinalRelease();
 

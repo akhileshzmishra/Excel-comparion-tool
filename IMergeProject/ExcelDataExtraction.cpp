@@ -159,10 +159,10 @@ void CExcelDataExtraction::SaveData(XLCellData* cellData, ExcelFormat::BasicExce
 	}
 }
 
-void CExcelDataExtraction::SaveToExcelFormat(XLCellDataContainer* container, std::string& path, bool isNew)
+bool CExcelDataExtraction::SaveToExcelFormat(XLCellDataContainer* container, std::string& path, bool isNew)
 {
 	if(!container)
-		return;
+		return false;
 	
 	try
 	{
@@ -175,6 +175,10 @@ void CExcelDataExtraction::SaveToExcelFormat(XLCellDataContainer* container, std
 			{
 				loaded = true;
 			}
+			else
+			{
+				return false;
+			}
 		}
 		else
 		{
@@ -185,6 +189,10 @@ void CExcelDataExtraction::SaveToExcelFormat(XLCellDataContainer* container, std
 		//BasicExcelWorksheet* sheet = xls.GetWorksheet(0);
 
 		BasicExcelWorksheet* sheet = XLLoader.GetWorksheet(0);
+		if(!sheet)
+		{
+			return false;
+		}
 		int r = container->Row();
 		int c = container->Col();
 		BasicExcelCell* cell = 0;
@@ -213,9 +221,13 @@ void CExcelDataExtraction::SaveToExcelFormat(XLCellDataContainer* container, std
 			}
 			ritr++;
 		}
-		XLLoader.SaveAs(path.c_str());
+		if(!XLLoader.SaveAs(path.c_str()))
+		{
+			return false;
+		}
 	}
 	catch(...)
 	{
 	}
+	return true;
 }

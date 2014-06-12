@@ -184,7 +184,7 @@ class CGridCtrl;
 
 typedef bool (*PVIRTUALCOMPARE)(int, int);
 
-class CGridCtrl : public CWnd,	public ScrollObserver
+class CGridCtrl : public CWnd,	public XLCtrlObserver
 {
 	int m_id;
     DECLARE_DYNCREATE(CGridCtrl)
@@ -197,7 +197,7 @@ public:
 	}
 	int GetId(){return m_id;}
 
-    CGridCtrl(ScrollSubject* subject = 0, int nRows = 0, int nCols = 0, int nFixedRows = 0, int nFixedCols = 0);
+    CGridCtrl(XLCtrlSubject* subject = 0, int nRows = 0, int nCols = 0, int nFixedRows = 0, int nFixedCols = 0);
 
     BOOL Create(const RECT& rect, CWnd* parent, UINT nID,
                 DWORD dwStyle = WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE);
@@ -234,11 +234,11 @@ public:
 	//Extra functions for comparision project
 	//Start
 	//----------------------
-	void Notify(ScrollData* data, XLEventType* type);
+	void Notify(XLObservedData* data, XLEventType* type);
 	void Clicked(CCellID id);
 
-	void DoHScroll(ScrollData data);
-	void DoVScroll(ScrollData data);
+	void DoHScroll(XLObservedData data);
+	void DoVScroll(XLObservedData data);
 	void SetRowBkColor(int r, COLORREF color);
 	void SetRowFgColor(int r, COLORREF color);
 
@@ -481,6 +481,8 @@ public:
     BOOL RedrawCell(const CCellID& cell, CDC* pDC = NULL);
     BOOL RedrawRow(int row);
     BOOL RedrawColumn(int col);
+
+	virtual void SaveToModelDB(int r, int c, CString& str);
 
 #ifndef _WIN32_WCE
     BOOL Save(LPCTSTR filename, TCHAR chSeparator = _T(','));
@@ -858,7 +860,7 @@ private:
 	bool m_AllowReorderColumn;
 	bool m_QuitFocusOnTab;
 	bool m_AllowSelectRowInFixedCol;
-	void m_SetCurrentObserver();
+	void SetThisObserverCurrent();
 
 };
 

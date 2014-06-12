@@ -12,6 +12,8 @@
 #include "SaveDialog.h"
 #include "AskBeforeExit.h"
 #include "FindItemDlg.h"
+#include "SideBar.h"
+#include "ToolTipRessourceButton.h"
 
 
 class IMergeProjectView : public CView
@@ -25,12 +27,13 @@ protected: // create from serialization only
 	int                              m_iMode;  
 	DPTextBox                        m_PathTxtBox[2];
 	class  XLUtility*                m_Utility; 
-	CBitmapButton                    m_PathBtns[2];	 //IDB_BITMAP_FILELOAD
+	CToolTipRessourceButton          m_PathBtns[2];	 //IDB_BITMAP_FILELOAD
 	CDifferencePointer*              m_DiffIndicator[2];
 	OnCompDialogBox*                 m_CompareDlg;
 	CSaveDialog*                     m_SaveDialog;
 	CAskBeforeExit*                  m_AskBeforeExitDlg;
 	CFindItemDlg*                    m_FindDlg;
+	CSideBar                         m_SideBar;
 
 protected:
 	IMergeProjectView();
@@ -56,6 +59,7 @@ public:
 // Overrides
 public:
 	virtual void OnDraw(CDC* pDC);  // overridden to draw this view
+	void OnDraw1(CDC* pDC, int top, int bottom);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	void OnActivateView(BOOL bActivate, CView* pActivateView,
 					CView* pDeactiveView);
@@ -76,6 +80,7 @@ public:
 protected:
 	void CreateGrid();
 	void DestroyGrid();
+	void CreateSideBar();
 	void ChangeMode(int past);
 
 	void CreatePathBox();

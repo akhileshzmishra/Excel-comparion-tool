@@ -14,7 +14,7 @@ public:
 	~CExcelDataExtraction(void);
 	XLCellDataContainer* GetXLContainer(std::string& filepath, int sheetNum = 0);
 	XLCellDataContainer* GetXLContainerExcelFormat(std::string& filepath, int sheetNum = 0);
-	void SaveToExcelFormat(XLCellDataContainer* container, std::string& path, bool isNew = false);
+	bool SaveToExcelFormat(XLCellDataContainer* container, std::string& path, bool isNew = false);
 private:
 	void SaveStringInCell(const wchar_t* s, XLCellData* data);
 	void SaveStringInCell(std::string& s, XLCellData* data);

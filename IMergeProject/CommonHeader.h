@@ -28,11 +28,11 @@
 #define DIFF_POINTER_BUTTON_H  20
 
 #ifndef BLUECOL
-#define BLUECOL RGB(0,0,125)
+#define BLUECOL RGB(0,0,255)
 #endif
 
 #ifndef REDCOL
-#define REDCOL RGB(125,0,0)
+#define REDCOL RGB(255,0,0)
 #endif
 
 
@@ -53,7 +53,7 @@
 #endif
 
 #ifndef DARKREDCOL
-#define DARKREDCOL RGB(255, 51, 51)
+#define DARKREDCOL RGB(255, 100, 100)
 #endif
 
 #ifndef WHITECOL
@@ -72,24 +72,6 @@
 typedef pair<int, int>    ComparedDataPair;	 
 typedef	vector<ComparedDataPair >  CompareListType;
 
-
-struct DiffIterator
-{
-	bool First;
-	bool Second;
-	int  Itr;
-	int  CurrTable;
-	DiffIterator(): First(false), Second(false), Itr(0), CurrTable(0){}
-	void Reset(bool hardReset = false)
-	{
-	   First = false;
-	   Second = false;
-	   if(hardReset)
-	   {
-		   Itr = 0;
-	   }
-	}
-};
 
 class RowComparisonComparator
 {
@@ -144,9 +126,8 @@ public:
 	~RowComparisonList();
 	int size()              {return (int)mRowList.size();}
 	void resize(int size);
-	RowComparison& operator [](int index)  { return mRowList[index];}
 
-	void InsertAtLast(int r1, int r2);
+	RowComparison* Insert(int r1, int r2);
 	RowComparison* AtLastFill();
 
 	void Delete(int r1, int r2);
@@ -180,7 +161,7 @@ public:
 	void operator --(int);
 	RowComparison* GetValue()   {return mThisValue;}
 	void DeleteCurrValue();
-	void SetAtPlace(int placeIdx);
+	void MoveToIndex(int placeIdx);
 
 	bool Next()                     {return ((mitr + 1) < mList->mFill);}
 	bool Previous()                 {return ((mitr - 1) >= 0);}
@@ -234,6 +215,8 @@ public:
 
 #define XL_UTIL \
 	XLUtility::GetInstance()
+
+
 
 
 #endif

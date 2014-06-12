@@ -13,10 +13,18 @@
 #include "XLComparator.h"
 
 
+enum CompareResult
+{
+	CompareResult_Unsuccessful,
+	CompareResult_Success_NoChange,
+	CompareResult_Success_Changes,
+
+	CompareResult_Invalid
+};
 
 
 
-class GridTableCompareView	 : public ScrollSubject	
+class GridTableCompareView	 : public XLCtrlSubject	
 {
 	XLComparator                          m_Comparator;
 	static GridTableCompareView*          m_Instance;
@@ -54,10 +62,10 @@ public:
 	}
 	virtual ~GridTableCompareView(void);
 
-	void LoadTableA(std::string path);
-	void LoadTableB(std::string path);
+	bool LoadTableA(std::string path);
+	bool LoadTableB(std::string path);
 
-	virtual void Load();
+	virtual bool Load();
 	virtual void CreateTable();
 
 	bool IsReady()
@@ -65,21 +73,27 @@ public:
 		return (m_bReady && (NumberofDrawableTables() >= 2));
 	}
 
-	virtual void Compare(XLTableParam param = XLTableParamFullTable);
+	int GetMaxRow()
+	{
+		return m_iMaxRow;
+	}
+
+	CompareResult Compare(XLTableParam param = XLTableParamFullTable);
 
 	void ResetTables();
 	void ResetContainers();
 	void ReCreateGridList();
 	void NextDifference();
 	void PrevDifference();
-	void CreateDiffTable();
+	CompareResult CreateDiffTable();
 	void CreateSameTable();
 	void CreateAllTable();
 	void CreateEmptyGrid();
 
 	//Function overloaded from observer
-	void Notify(ScrollData* data, XLEventType condition);
+	void Notify(XLObservedData* data, XLEventType condition);
 	void SaveToDatabase(int r, int c, CString& value);
+	void SaveToTable(int r, int c, CString& value, int table);
 	void OnCopyFromRightToLeft(int r1, int r2, int c1, int c2);
 	void OnCopyFromLeftToRight(int r1, int r2, int c1, int c2);
 
@@ -96,12 +110,17 @@ public:
 	void FindBackward(std::wstring& wstr);
 	void FindForward(std::wstring& wstr);
 
-	void SaveInFiles();
-	void SaveFileA();
-	void SaveFileB();
+	bool SaveInFiles();
+	bool SaveFileA();
+	bool SaveFileB();
 	void GridSameCol(int first, int r1, int col1, int second, int r2, int col2);
 	void ArrowPosition(int X, int Y);
 	void UndoChanges();
+	void GoToRow(int row, int table);
+	RETURNTYPE& ChangedRowNumber()
+	{
+		return m_Comparator.ChangedRows();
+	}
 private:
 	void m_fillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int c, int gr, int gc);
 	void m_fillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int gr, int c);
@@ -131,7 +150,7 @@ private:
 
 	void NotifyFileChange(int tbl);
 	void NotifyFileSaved();
-	void m_SetMaxRowColForGridCreation();
+	void m_SetMaxRowColForGridCreation();	
 
 	void RecordInHistory(int tableID, CellIdentifier contCell, XLCellData* data);
 

@@ -20,6 +20,8 @@ enum XLEventType
 	GRID_RIGHT_FILE_CHANGED,
 	GRID_FILE_SAVED,
 
+	GRID_ON_COMPARE_DONE,
+
 
 	EVENTTYP_MAX
 };
@@ -30,13 +32,13 @@ enum XLWindowEventType
 	WM_MODELESS_CLOSED = EVENTTYP_MAX + 1
 };
 
-struct ScrollData
+struct XLObservedData
 {
 	XLEventType EventType;
 	int Data;
 	int Action;
-	ScrollData():EventType(GRID_NONE),Data(0), Action(0){}
-	ScrollData(char* dest)
+	XLObservedData():EventType(GRID_NONE),Data(0), Action(0){}
+	XLObservedData(char* dest)
 	{
 		int x = 0;
 		memcpy(&EventType, &dest[x], sizeof(XLEventType));
@@ -73,7 +75,7 @@ public:
 	m_Observer(0)
 	{
 	}
-	void SetCurrentObserver(IObserver2<T, X>* observer)
+	virtual void SetCurrentObserver(IObserver2<T, X>* observer)
 	{
 		m_Observer = observer;
 	}
@@ -82,13 +84,30 @@ public:
 		return m_Observer;
 	}
 	virtual void SaveToDatabase(int r, int c, CString& value) = 0;
+	virtual void SaveToTable(int r, int c, CString& value, int table) = 0;
 	virtual void OnCopyFromRightToLeft(int r1, int r2, int c1, int c2) = 0;
 	virtual void OnCopyFromLeftToRight(int r1, int r2, int c1, int c2) = 0;
 };
 
+template<class T, class X>
+class GridViewObserver : public IObserver2<T, X>
+{
+public:
+	GridViewObserver(ISubject2<T, X>* subject, std::vector<X>& conditions):
+	IObserver2(subject, conditions)
+	{
+	}
+	GridViewObserver(ISubject2<T, X>* subject, X* conditions = 0, int size = 0):
+	IObserver2(subject, conditions, size)
+	{
+	}
+	virtual void SaveToModelDB(int r, int c, CString& str) {}
+	virtual void SetThisObserverCurrent()                  {}
+};
 
-typedef IObserver2<ScrollData, XLEventType> ScrollObserver;
-typedef GridViewSubject<ScrollData, XLEventType> ScrollSubject;
+
+typedef GridViewObserver<XLObservedData, XLEventType> XLCtrlObserver;
+typedef GridViewSubject<XLObservedData, XLEventType> XLCtrlSubject;
 
 
 

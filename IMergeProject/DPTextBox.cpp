@@ -3,7 +3,7 @@
 #include "GridTableCompareView.h"
 
 DPTextBox::DPTextBox(RECT rect)	:
-ScrollObserver(GridTableCompareView::GetInstance(),0,0),
+XLCtrlObserver(GridTableCompareView::GetInstance(),0,0),
 m_X(0),
 m_Y(0),
 m_bTextSet(false),
@@ -16,7 +16,7 @@ m_bIsDirty(false)
 }
 
 DPTextBox::DPTextBox():
-ScrollObserver(GridTableCompareView::GetInstance(),0,0),
+XLCtrlObserver(GridTableCompareView::GetInstance(),0,0),
 m_X(0),
 m_Y(0),
 m_bTextSet(false),
@@ -48,7 +48,7 @@ void DPTextBox::Create(CView* parent, RECT rect, bool bLeft)
 	Register(GRID_FILE_SAVED);
 }
 
-void DPTextBox::Notify(ScrollData* data, XLEventType* condition)
+void DPTextBox::Notify(XLObservedData* data, XLEventType* condition)
 {
 	if(*condition == GRID_FILE_SAVED)
 	{

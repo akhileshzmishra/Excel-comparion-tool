@@ -14,8 +14,8 @@ static const XLEventType ConditionsR[] = {GRID_POINTER_MOVE_RIGHT};
 
 IMPLEMENT_DYNAMIC(CDifferencePointer, CBitmapButton)
 
-CDifferencePointer::CDifferencePointer(ScrollSubject* subject, DiffPointerType type):
-ScrollObserver(subject, ((type == DiffPointerLeftType)? (XLEventType*)Conditions: (XLEventType*)ConditionsR) , 1),
+CDifferencePointer::CDifferencePointer(XLCtrlSubject* subject, DiffPointerType type):
+XLCtrlObserver(subject, ((type == DiffPointerLeftType)? (XLEventType*)Conditions: (XLEventType*)ConditionsR) , 1),
 mView(0),
 m_bCreate(false),
 mX(0),
@@ -101,7 +101,7 @@ void CDifferencePointer::OnFinalRelease()
 }
 
 
-void CDifferencePointer::Notify(ScrollData* data, XLEventType* condition)
+void CDifferencePointer::Notify(XLObservedData* data, XLEventType* condition)
 {
 	Move(mX, data->Data);
 	if(data->Action == ActionShow)

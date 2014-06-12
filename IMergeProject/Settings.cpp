@@ -97,7 +97,7 @@ void CSettingsSM::StateAchieved(int StateID)
 		RestoreFlag(SHOW_DIFF_ITR_FLAG);
 		break;
 	case SHOW_ONLY_DIFF:
-		RestoreFlag(SHOW_DIFF_ITR_FLAG);
+		StoreFlag(SHOW_DIFF_ITR_FLAG);
 		break;
 	case SHOW_ALL:
 		StoreFlag(SHOW_DIFF_ITR_FLAG);
