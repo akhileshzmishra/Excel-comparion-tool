@@ -15,8 +15,9 @@ bool XLMutex::Create()
 {
 	if(!mSem.IsCreated())
 	{
-		mSem.Create(1);
+	     return mSem.Create(1);
 	}
+	return false;
 }
 void XLMutex::Destroy()
 {
