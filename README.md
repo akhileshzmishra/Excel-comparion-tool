@@ -1,8 +1,13 @@
 Excel-comparion-tool
 ====================
 
-Excel compare
-We have created excel comparison tool here. 
+We have created excel comparison tool here. This tool compares two tables of different rows and cols and segregates the matched rows from unmatched rows. There are three different views: Difference only view, Same only view and all view
+
+You can also edit the excel sheets and save them as if you are actually working on them.
+
+_Performance_
+=============
+
 Let _m_ and _n_ be the number of rows and cols respectively
 and l be the length of maximum string
 
@@ -18,7 +23,15 @@ and l be the length of maximum string
 |3  |Map duals | creating map from and to view and database|
 
 
-Excel compare This tool helps in comparing excel files and merging them. At present it has following capabilites 1. Comparison on base of LCS for rows and exact matching for cols. That implies that cols have to be orderered good matching. Rows can be unordered. What I mean by ordering: a. If rows are ordered that means that rows with unique identity that is same in both files reside at same row number. If cols are ordered that means that cols with same heading reside at same col number. b. In case of unordered, rows with unique identity that is same in both files can reside at any location.
+
+
+_Detailed Discussion_
+=====================
+
+This tool helps in comparing excel files and merging them. At present it has following capabilites 
+1. Comparison on base of LCS for rows and exact matching for cols. That implies that cols have to be orderered good matching. Rows can be unordered. What I mean by ordering: 
+2. If rows are ordered that means that rows with unique identity that is same in both files reside at same row number. If cols are ordered that means that cols with same heading reside at same col number. 
+3. In case of unordered, rows with unique identity that is same in both files can reside at any location.
 
 As an example: 
 
@@ -49,6 +62,9 @@ We have tried to give professional look and feel to the application. It has sear
 The tool also has ways of editing/copying/transferring contents from left file to right file.
 
 This tool is build with MFC. I am really sorry about using this old technology. This project started as an intern project in which I acted as a mentor. But with growing demand inside our company, we had to make it more professional by adding various features.
+
+_Finally_
+=========
 
 In coming releases, I would add side bar, tool tip among other things to make this application more professional.
 
