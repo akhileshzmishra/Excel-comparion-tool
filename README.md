@@ -18,14 +18,14 @@ Excel compare This tool helps in comparing excel files and merging them. At pres
 As an example: 
 
 | H1  | H2  | H3  |
--------------------
+|-----|-----|-----|
 | a11 | a12 | a13 |
 | a21 | a22 | a23 |
 
 _Table 1_
 
 | H1  | H2  |  H3  |
---------------------
+|-----|-----|------|
 | a21 | a22 |  a23 |
 | a11 | a12 |  a13 |
 
