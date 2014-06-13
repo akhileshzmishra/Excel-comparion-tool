@@ -3,7 +3,7 @@ Excel-comparion-tool
 
 Excel compare
 We have created excel comparison tool here. 
-Let m and n be the number of rows and cols respectively
+Let _m_ and _n_ be the number of rows and cols respectively
 and l be the length of maximum string
 
 |Sn |Algorithms Used | Complexity | 
