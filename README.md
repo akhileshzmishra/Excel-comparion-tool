@@ -4,7 +4,6 @@ Excel-comparion-tool
 Excel compare
 We have created excel comparison tool here. 
 
-Please suggest us if there is any chqnge required
 Algorithms Used:
 1. LCS for comparing rows
 2. Boyer Moore for string search.
@@ -18,15 +17,23 @@ Excel compare This tool helps in comparing excel files and merging them. At pres
 
 As an example: 
 
-| H1  | H2  | 
-| a11 | a12 |---> Row 1 
-| a21 | a22 |---> Row 2
+| H1  | H2  | H3  |
+-------------------
+| a11 | a12 | a13 |
+| a21 | a22 | a23 |
 
-| H1  | H2  | 
-| a21 | a22 |---> Row 2 
-| a11 | a12 |---> Row 1
+_Table 1_
 
-In above example both files have same rows but at different position. The tool identifies that. If cols were different as in H1 and H2 are at different position, the tool would mark both as unmatched rows.
+| H1  | H2  |  H3  |
+--------------------
+| a21 | a22 |  a23 |
+| a11 | a12 |  a13 |
+
+_Table 2_
+
+The two rows are at different position relative to each other. So if I choose that _row 1_ of first table is correct relative to _row 2_ then, _row 1_ is at wrong position relative to _row 2_ in second table. This is called row ordering. 
+
+So if rows are not ordererd properly, the tool can find them out and segregate them from rows that have differences
 
 We have tried to give professional look and feel to the application. It has search capabilites presently based upon Boyer Moore string search algorithm.
 
