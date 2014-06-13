@@ -5,8 +5,17 @@ We have created excel comparison tool here. This tool compares two tables of dif
 
 You can also edit the excel sheets and save them as if you are actually working on them.
 
+_How to build_
+---------------
+There are two projects inside: 
+IMergeProject: Actual project
+SetupIMerge: Creation of setup files in case you want to redistribute the files.
+
+
+You should have Visual Studios 2005 Standard edition with MFC installed in your machine. Download the code and find _IMergeProject.sln_ inside _IMergeProject_ folder. Open it and build it. Start without debugging. Please see that your project configuration is in Release mode.
+
 _Performance_
-=============
+-------------
 
 Let _m_ and _n_ be the number of rows and cols respectively
 and l be the length of maximum string
@@ -26,7 +35,7 @@ and l be the length of maximum string
 
 
 _Detailed Discussion_
-=====================
+-----------------------
 
 This tool helps in comparing excel files and merging them. At present it has following capabilites 
 1. Comparison on base of LCS for rows and exact matching for cols. That implies that cols have to be orderered good matching. Rows can be unordered. What I mean by ordering: 
@@ -64,7 +73,7 @@ The tool also has ways of editing/copying/transferring contents from left file t
 This tool is build with MFC. I am really sorry about using this old technology. This project started as an intern project in which I acted as a mentor. But with growing demand inside our company, we had to make it more professional by adding various features.
 
 _Finally_
-=========
+-----------
 
 In coming releases, I would add side bar, tool tip among other things to make this application more professional.
 
