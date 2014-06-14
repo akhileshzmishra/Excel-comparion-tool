@@ -18,12 +18,12 @@ _Performance_
 -------------
 
 Let _m_ and _n_ be the number of rows and cols respectively
-and l be the length of maximum string
+and _l_ be the length of string
 
 |Sn |Algorithms Used | Complexity | 
 |---|----------------|------------|
-|1  |LCS for comparing rows| _O(m*n*n)_ |
-|2  | Boyer Moore for string search.| _O(l)_ |
+|1  |LCS for comparing rows| O(_m_*_n_*_n_) |
+|2  |Boyer Moore for string search.| O(_l_) [ O(_l_* _m_ *_n_) for searching entire cell fields (_m_ * _n_) |
 
 |Sn |Data structure| Usage  |
 |---|--------------|---------|
