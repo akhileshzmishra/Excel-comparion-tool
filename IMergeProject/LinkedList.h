@@ -112,6 +112,10 @@ public:
 		LListNode<T>* secHead = mHead;
 		mHead = mHead->Next();
 		mHead->Previous() = 0;
+		if(mTail == secHead)
+		{
+			mTail = 0;
+		}
 		CallListener(LinkedList_DeleteNodeFront, secHead);
 		mElements--;
 		delete secHead;
@@ -133,6 +137,7 @@ public:
 		else
 		{
 			secHead->Next() = 0;
+			mHead->Previous() = 0;
 			mTail->Next() = secHead;
 			secHead->Previous() = mTail;
 			mTail = mTail->Next();
@@ -147,6 +152,10 @@ public:
 		LListNode<T>* secHead = mTail;
 		mTail = mTail->Previous();
 		mTail->Next() = 0;
+		if(mHead == secHead)
+		{
+			mHead = 0;
+		}
 		CallListener(LinkedList_DeleteNodeBack, secHead);
 		mElements--;
 		delete secHead;	
