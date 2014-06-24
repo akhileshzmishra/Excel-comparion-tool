@@ -38,9 +38,9 @@ public:
 	int NoChildren()       {return (int) mChildList.size();}
 
 
-	TNode<T,D>* GetChild(T data)
+	TNode<T,D>* GetChild(T key)
 	{
-		ChildItr itr = mChildList.find(data);
+		ChildItr itr = mChildList.find(key);
 		if(itr != mChildList.end())
 		{
 			return itr->second;
@@ -53,13 +53,23 @@ public:
 		ChildItr itr = mChildList.find(key);
 		if(itr == mChildList.end())
 		{
-			TNode<T, D>* ptr = new TNode<T, D>(key)
-			mChildList.insert(ChildPair(T, ptr ));
+			TNode<T, D>* ptr = new TNode<T, D>(key);
+			mChildList.insert(ChildPair(key, ptr ));
 			return ptr;
 		}
 		else
 		{
 			return itr->second;
+		}
+	}
+
+	void DeleteKey(T Key)
+	{
+	    ChildItr itr = mChildList.find(Key);
+		if(itr != mChildList.end())
+		{
+			delete itr->second;
+			mChildList.erase(itr);
 		}
 	}
 
@@ -135,6 +145,10 @@ public:
 	{
 		return mItr->second;
 	}
+	T Key()
+	{
+		return mItr->first;
+	}
 
 
 };
@@ -146,19 +160,23 @@ class TTrieMap
 	int           mDepth;
 public:
 	TTrieMap():
-	mDepth(0)
+	mDepth(1)
 	{
 	}
 	void Insert(T* tArray, int ArrSize, D Value)
 	{
-		TNode<T, D>*& ref = &mHead;
-		int depth = 0;
+		TNode<T, D>* ref = &mHead;
+		int depth = 1;
 		for(int i = 0; i < ArrSize; i++)
 		{
 			if(ref)
 			{
-				ref = ref->Insert(tArray[i]);
+				ref = ref->InsertChild(tArray[i]);
 				depth++;
+			}
+			else
+			{
+				break;
 			}
 		}
 		if(ref)
@@ -174,12 +192,24 @@ public:
 
 	D* Value(T* tArray, int ArrSize)
 	{
-		TNode<T, D>*& ref = &mHead;
+		if(ArrSize > mDepth)
+		{
+			return 0;
+		}
+		if(!tArray)
+		{
+			return 0;
+		}
+		TNode<T, D>* ref = &mHead;
 		for(int i = 0; i < ArrSize; i++)
 		{
 			if(ref)
 			{
 				ref = ref->GetChild(tArray[i]);
+			}
+			else
+			{
+				return 0;
 			}
 		}
 		if(ref)
@@ -194,6 +224,67 @@ public:
 	int MaxDepth()
 	{
 		return mDepth;
+	}
+	bool Delete(T* tArray, int ArrSize)
+	{
+		if(ArrSize > mDepth)
+		{
+			return false;
+		}
+		if(!tArray)
+		{
+			return false;
+		}
+		TNode<T, D>* ref = &mHead;
+		std::stack<TNode<T, D>* > Stack;
+		for(int i = 0; i < ArrSize; i++)
+		{
+			if(ref)
+			{
+				ref = ref->GetChild(tArray[i]);
+				Stack.push(ref);
+			}
+			else
+			{
+				return false;
+			}
+		}
+		if(ref)
+		{
+			if(!ref->IsLeafNode())
+			{
+				return false;
+			}
+			TNode<T, D>* nodeup = Stack.top();
+			Stack.pop();
+			T key = nodeup->Key();
+			while(Stack.size() > 0)
+			{
+				TNode<T, D>* node = Stack.top();
+				Stack.pop();
+				if(node)
+				{
+					TNode<T, D>* child = node->GetChild(key);
+					if(child)
+					{
+						if(child->NoChildren() == 0)
+						{
+							node->DeleteKey(key);
+							key = node->Key();
+						}
+						else
+						{
+							break;
+						}
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+		}
+		return true;
 	}
 
 };
