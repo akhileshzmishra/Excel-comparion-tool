@@ -63,6 +63,16 @@ public:
 		}
 	}
 
+	void DeleteKey(T Key)
+	{
+	    ChildItr itr = mChildList.find(Key);
+		if(itr != mChildList.end())
+		{
+			delete itr->second;
+			mChildList.erase(itr);
+		}
+	}
+
 	void SetLeafNode(bool set)
 	{
 		mIsALeaf = true;
@@ -256,6 +266,15 @@ public:
 
 	bool Value(T* tArray, int ArrSize)
 	{
+		if(ArrSize > mDepth)
+		{
+			return 0;
+		}
+		if(!tArray)
+		{
+			return 0;
+		}
+
 		TSNode<T>*  ptr  = &mHead;
 		TNode<T, D>*& ref = ptr;
 		for(int i = 0; i < ArrSize; i++)
@@ -278,10 +297,75 @@ public:
 	{
 		return mDepth;
 	}
+	bool Delete(T* tArray, int ArrSize)
+	{
+		if(ArrSize > mDepth)
+		{
+			return false;
+		}
+		if(!tArray)
+		{
+			return false;
+		}
+		TSNode<T>* ref = &mHead;
+		std::stack<TSNode<T>* > Stack;
+		for(int i = 0; i < ArrSize; i++)
+		{
+			if(ref)
+			{
+				ref = ref->GetChild(tArray[i]);
+				Stack.push(ref);
+			}
+			else
+			{
+				return false;
+			}
+		}
+		if(ref)
+		{
+			if(!ref->IsLeafNode())
+			{
+				return false;
+			}
+			TSNode<T>* nodeup = Stack.top();
+			Stack.pop();
+			T key = nodeup->Key();
+			while(Stack.size() > 0)
+			{
+				TSNode<T>* node = Stack.top();
+				Stack.pop();
+				if(node)
+				{
+					TSNode<T>* child = node->GetChild(key);
+					if(child)
+					{
+						if(child->NoChildren() == 0)
+						{
+							node->DeleteKey(key);
+							key = node->Key();
+						}
+						else
+						{
+							break;
+						}
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+		}
+		return true;
+	}
 	std::vector<TSetValue<T>> GetAllMatches(T* tArray, int ArrSize)
 	{
 		std::vector<TSetValue<T>> result;
 		if(ArrSize > mDepth)
+		{
+			return result;
+		}
+		if(!tArray)
 		{
 			return result;
 		}
