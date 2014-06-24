@@ -25,6 +25,11 @@ public:
     mIsALeaf(false)	   
 	{
 	}
+	TSNode(T key):
+	mKey(key),
+    mIsALeaf(false)	   
+	{
+	}
 	
 
 	~TSNode()              {}
@@ -46,10 +51,9 @@ public:
 	TSNode<T>* InsertChild(T key)
 	{
 		ChildItr itr = mChildList.find(key);
-		mKey = key;
 		if(itr == mChildList.end())
 		{
-			TSNode<T>* ptr = new TSNode<T>() ;
+			TSNode<T>* ptr = new TSNode<T>(key) ;
 			mChildList.insert(ChildPair(key, ptr ));   
 			return ptr;
 		}
@@ -220,13 +224,13 @@ class TTrieSet
 	int         mDepth;
 public:
 	TTrieSet():
-	mDepth(0)
+	mDepth(1)
 	{
 	}
 	void Insert(T* tArray, int ArrSize)
 	{
 		TSNode<T>*  ptr  = &mHead;
-		int depth = 0;
+		int depth = 1;
 		for(int i = 0; i < ArrSize; i++)
 		{
 			if(ptr)
@@ -283,7 +287,7 @@ public:
 		}
 		if(mDepth > 0)
 		{
-			TSetValue<T> newVal(mDepth + 1);
+			TSetValue<T> newVal(mDepth);
 
 			memcpy(newVal.Array, tArray, ArrSize);
 			TSNode<T>* ref = &mHead;
@@ -302,14 +306,15 @@ public:
 			{
 				std::stack<TSStackNode<T> > Stack;
 				Stack.push(TSStackNode<T>(ref, 0));
-				int pos = ArrSize;
+				int pos = ArrSize - 1;
 				while(Stack.size() > 0)
 				{
 					TSStackNode<T> node = Stack.top();
 					Stack.pop();
 					if((node.Node->IsLeafNode()) || (node.Node->NoChildren() == 0))	
 					{
-						newVal[pos + node.Level] = 0;
+						newVal[pos + node.Level] = node.Node->Key();
+						newVal[pos + node.Level + 1] = 0;
 						result.push_back(newVal);
 					}
 					else
