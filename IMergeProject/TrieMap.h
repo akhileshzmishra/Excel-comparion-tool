@@ -163,6 +163,10 @@ public:
 	mDepth(1)
 	{
 	}
+	~TTrieMap()
+	{
+		DeleteAllItems();
+	}
 	void Insert(T* tArray, int ArrSize, D Value)
 	{
 		TNode<T, D>* ref = &mHead;
@@ -285,6 +289,32 @@ public:
 			}
 		}
 		return true;
+	}
+private:
+	void DeleteAllItems()
+	{
+		std::queue<TNode<T, D>* > Q;
+
+		TNodeItr<T, D> itr(&mHead);
+		while(!itr.IsEnd())
+		{
+			Q.push(itr.Value());
+			itr++;
+		}
+
+		while(Q.size() > 0)
+		{
+			TNode<T, D>* node = Q.front();
+			Q.pop();
+			TNodeItr<T, D> itr1(node);
+			while(!itr1.IsEnd())
+			{
+				Q.push(itr1.Value());
+				itr++;
+			}
+
+			delete node;
+		}
 	}
 
 };
