@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <stack>
+#include <queue>
 
 template<class T>
 class TSNodeItr;
@@ -237,6 +238,10 @@ public:
 	mDepth(1)
 	{
 	}
+	~TTrieSet()
+	{
+		DeleteAllItems();
+	}
 	void Insert(T* tArray, int ArrSize)
 	{
 		TSNode<T>*  ptr  = &mHead;
@@ -418,6 +423,35 @@ public:
 			}
 			return result;
 
+		}
+	}
+
+
+
+private:
+	void DeleteAllItems()
+	{
+		std::queue<TSNode<T>* > Q;
+
+		TSNodeItr<T> itr(&mHead);
+		while(!itr.IsEnd())
+		{
+			Q.push(itr.Value());
+			itr++;
+		}
+
+		while(Q.size() > 0)
+		{
+			TSNode<T>* node = Q.front();
+			Q.pop();
+			TSNodeItr<T> itr1(node);
+			while(!itr1.IsEnd())
+			{
+				Q.push(itr1.Value());
+				itr++;
+			}
+
+			delete node;
 		}
 	}
 
