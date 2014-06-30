@@ -310,7 +310,7 @@ private:
 			while(!itr1.IsEnd())
 			{
 				Q.push(itr1.Value());
-				itr++;
+				itr1++;
 			}
 
 			delete node;
