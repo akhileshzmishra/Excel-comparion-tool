@@ -74,7 +74,8 @@ The tool also has ways of editing/copying/transferring contents from left file t
 This tool is build with MFC. I am really sorry about using this old technology. This project started as an intern project in which I acted as a mentor. But with growing demand inside our company, we had to make it more professional by adding various features.
 
 _Data structure_ used for table has been upgraded to modified B tree now:
-
+|Sn | Description |
+|---|-------------|
 |1. | _Insertion takes at  most log n time_.|
 |2. |_Lookup takes at most log n time_|
 |3. |_Deletion takes at most log n time_|
@@ -82,9 +83,13 @@ _Data structure_ used for table has been upgraded to modified B tree now:
 
 As an example
 There are 10 elements indexed from 1 - to - 10.
+|-----|
 |1(A) 2(B) 3(C) 4(D) 5(E) 6(F) 7(G) 8(H) 9(I) 10(J)|
+|-----|
 After an insertion at 4th place the elements should be
+|-----|
 |1(A) 2(B) 3(C) 4(Insert) 5(D) 6(E) 7(F) 8(G) 9(H) 10(I) 11(J)|
+|-----|
 
 This can be achieved by a list but every other operation would be terribly slow. With any combination of primitive data structure available in stl, it was not possible to have a fast look up, fast insertion/ deletion while still preserving index.
 
