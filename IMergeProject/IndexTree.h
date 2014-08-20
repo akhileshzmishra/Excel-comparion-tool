@@ -2,6 +2,9 @@
 #define _INDEX_TREE_H_
 
 #include <vector>
+#include <iostream>
+
+using namespace std;
 namespace IndexTreeSpace
 {
 
@@ -25,7 +28,7 @@ public:
 	}
 
 	IndexPocket(const IndexPocket<T>& other):
-	m_iCapacity(other.m_iCapacity),		
+	m_iCapacity(other.m_iCapacity),
 	m_iSize(0),
 	m_bAutoEnhance(other.m_bAutoEnhance),
 	m_DataList(other.m_DataList)
@@ -41,7 +44,7 @@ public:
 
 		m_iCapacity = other.m_iCapacity;
 		m_iSize = other.m_iSize;
-		m_bAutoEnhance = other.m_bAutoEnhane;
+		m_bAutoEnhance = other.m_bAutoEnhance;
 		m_DataList = other.m_DataList;
 
 		return *this;
@@ -167,7 +170,7 @@ public:
 		m_iSize = mid + 1;
 
 		return newPocket;
-		
+
 	}
 
 
@@ -221,10 +224,10 @@ class IndexTreeNode
 	typedef IndexTreeNode<T>                        _Class;
 	typedef IndexPocket<T>                          _Pocket;
 
-	template<class T>
+	template<class M>
 	class ChildNode
 	{
-		typedef IndexTreeNode<T>                     _Node;
+		typedef IndexTreeNode<M>                     _Node;
 		int                                          m_iFrequency;
 		_Node*                                       m_pNode;
 
@@ -248,8 +251,8 @@ class IndexTreeNode
 
 	typedef ChildNode<T>                            _ChildNode;
 	typedef IndexPocket<_ChildNode>                 _ChildList;
-	
-	
+
+
 
 	union ChildUnion
 	{
@@ -317,7 +320,7 @@ public:
 	}
 
 
-	
+
 	bool IsLeaf()                      {return m_bLeaf;}
 	_Class*& Parent()                  {return m_pParent;}
 	int& Position()                    {return m_iPosition;}
@@ -338,7 +341,7 @@ public:
 		}
 	}
 
-	int ChildListSize() 
+	int ChildListSize()
 	{
 		if(IsLeaf())
 		{
@@ -468,16 +471,21 @@ public:
 
 	bool Delete(int index)
 	{
+		bool bRet = false;
 		if(IsLeaf())
 		{
-			return __DeleteData(index);
+			bRet = __DeleteData(index);
 		}
 		else
 		{
-			return __DeleteChild(index);
+			bRet = __DeleteChild(index);
 		}
 
-		__TellParentsAboutSizeChange();
+		if(bRet)
+		{
+			__TellParentsAboutSizeChange();
+		}
+		return bRet;
 	}
 
 	IndexTreeNode<T>* Divide()
@@ -718,7 +726,7 @@ private:
 		_ChildNode* midNode = 0;
 
 		while((y - x) > 1)
-		{			
+		{
 			mid = (y + x)/2;
 
 			midNode = m_ChildUnion.m_ChildList->Value(mid);
@@ -793,8 +801,6 @@ public:
 		}
 
 		_Node* pItr = m_pHead;
-		_Node* pChild = 0;
-
 
 		//we will find the leaf node to enter
 		pItr = __GetToLeafNode(index);
@@ -818,7 +824,7 @@ public:
 		{
 			return true;
 		}
-		
+
 
 		return false;
 
@@ -827,7 +833,6 @@ public:
 	bool Pushback(T Data)
 	{
 		_Node* pItr = m_pHead;
-		_Node* sibling = 0;
 		//we will find the leaf node to enter
 		int index = Size() - 1;
 		pItr = __GetToLeafNode(index);
@@ -879,7 +884,7 @@ public:
 
 	bool Popback()
 	{
-		return Delete(m_iSize - 1);
+		return Delete(Size() - 1);
 	}
 
 	bool Value(int index, T*& val)
@@ -960,7 +965,7 @@ private:
 			{
 				if(parent->Full())
 				{
-					//bifurcate 
+					//bifurcate
 					Uncle = parent->Divide();
 					if(pItr->Parent() == parent)
 					{
