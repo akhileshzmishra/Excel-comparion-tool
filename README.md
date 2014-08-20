@@ -85,14 +85,12 @@ _Data structure_ used for table has been upgraded to modified B tree now:
 As an example
 There are 10 elements indexed from 1 - to - 10.
 
+|Operation Type |Data with index. eg. 1 is index and A is data|
+|---------------|---------------------------------------------|
+|Initially      |1(A) 2(B) 3(C) 4(D) 5(E) 6(F) 7(G) 8(H) 9(I) 10(J)|
+|Insertion at 4 |1(A) 2(B) 3(C) 4(Insert) 5(D) 6(E) 7(F) 8(G) 9(H) 10(I) 11(J)|
+|Deletion at 8  |1(A) 2(B) 3(C) 4(Insert) 5(D) 6(E) 7(F) 8(H) 9(I) 10(J)|
 
-|-----|
-|1(A) 2(B) 3(C) 4(D) 5(E) 6(F) 7(G) 8(H) 9(I) 10(J)|
-|-----|
-After an insertion at 4th place the elements should be
-|-----|
-|1(A) 2(B) 3(C) 4(Insert) 5(D) 6(E) 7(F) 8(G) 9(H) 10(I) 11(J)|
-|-----|
 
 This can be achieved by a list but every other operation would be terribly slow. With any combination of primitive data structure available in stl, it was not possible to have a fast look up, fast insertion/ deletion while still preserving index.
 
