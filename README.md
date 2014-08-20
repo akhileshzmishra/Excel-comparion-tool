@@ -74,6 +74,7 @@ The tool also has ways of editing/copying/transferring contents from left file t
 This tool is build with MFC. I am really sorry about using this old technology. This project started as an intern project in which I acted as a mentor. But with growing demand inside our company, we had to make it more professional by adding various features.
 
 _Data structure_ used for table has been upgraded to modified B tree now:
+
 |Sn | Description |
 |---|-------------|
 |1. | _Insertion takes at  most log n time_.|
@@ -83,6 +84,8 @@ _Data structure_ used for table has been upgraded to modified B tree now:
 
 As an example
 There are 10 elements indexed from 1 - to - 10.
+
+
 |-----|
 |1(A) 2(B) 3(C) 4(D) 5(E) 6(F) 7(G) 8(H) 9(I) 10(J)|
 |-----|
