@@ -84,7 +84,7 @@ IDR_TOOLBAR2            BITMAP                  "res\\toolbar2.bmp"
 IDB_BITMAP_FILELOAD     BITMAP                  "res\\bmp00004.bmp"
 IDB_BITMAP_FILE_LOAD_F  BITMAP                  "res\\bmp00005.bmp"
 IDB_BITMAP_FILELOAD_S   BITMAP                  "res\\bmp00006.bmp"
-IDB_BITMAP_TOOLTIPBTN_LOAD BITMAP                  "res\\bmp00007.bmp"
+IDB_BITMAP_TOOLTIPBTN_LOAD BITMAP                  "res\\bmp00006.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -133,13 +133,7 @@ BEGIN
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
-        MENUITEM SEPARATOR
-        MENUITEM "&Print...\tCtrl+P",           ID_FILE_PRINT
-        MENUITEM "Print Pre&view",              ID_FILE_PRINT_PREVIEW
-        MENUITEM "P&rint Setup...",             ID_FILE_PRINT_SETUP
-        MENUITEM SEPARATOR
-        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1
-        MENUITEM SEPARATOR
+ 
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
     POPUP "&Edit"
@@ -168,17 +162,12 @@ BEGIN
         MENUITEM "&Find Next",                  ID_FIND_NEXT
         MENUITEM "&Find Previous",              ID_FIND_PREV
         MENUITEM SEPARATOR
-        MENUITEM "Set Base Row",                ID_SETTING_SETBASEROW
-        MENUITEM "Merge",                       ID_SETTING_MERGE
+        MENUITEM "Options",                     ID_SETTING_OPTIONS
     END
     POPUP "&Help"
     BEGIN
         MENUITEM "&About This project",         ID_APP_ABOUT
-        POPUP "Synchronous Scroll"
-        BEGIN
-            MENUITEM "Yes",                         ID_SYNCHRONOUSSCROLL_YES
-            MENUITEM "No",                          ID_SYNCHRONOUSSCROLL_NO
-        END
+
     END
 END
 
@@ -308,6 +297,34 @@ BEGIN
     CONTROL         "Find Down",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,37,97,90,10
 END
 
+IDD_OPTION_DLG DIALOGEX 0, 0, 313, 250
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Options"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,117,214,50,14
+    GROUPBOX        "General",IDC_STATIC,38,157,234,35
+    GROUPBOX        "Optimization",IDC_STATIC,40,19,232,67
+    LTEXT           "Page Size",IDC_STATIC,54,40,46,9
+    LTEXT           "Tree Order",IDC_STATIC,54,58,44,13
+    COMBOBOX        IDC_COMBO_PAGE_SIZE,123,36,115,13,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,WS_EX_TRANSPARENT
+    COMBOBOX        IDC_COMBO_TREE_ORDER,123,58,115,13,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,WS_EX_TRANSPARENT
+    GROUPBOX        "Operation Type",IDC_STATIC,39,92,236,59
+    LTEXT           "Operation type",IDC_STATIC_OPTYPR,53,111,60,9
+    COMBOBOX        IDC_COMBO_OP_TYPE,123,109,115,13,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,WS_EX_TRANSPARENT
+    LTEXT           "Match Ratio",IDC_STATIC_MATCH_RATIO,53,129,46,9
+    EDITTEXT        IDC_MATCH_RATIO,123,126,116,13,ES_AUTOHSCROLL
+    CONTROL         "Compare automatically when 2nd file is loaded",IDC_CHECK_AUTO_COMPARE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,172,185,9
+END
+
+IDD_DIALOG4 DIALOGEX 0, 0, 575, 93
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Viewer"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -411,8 +428,75 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 161
     END
+
+    IDD_OPTION_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 306
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 242
+    END
+
+    IDD_DIALOG4, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 568
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 86
+    END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_OPTION_DLG DLGINIT
+BEGIN
+    IDC_COMBO_PAGE_SIZE, 0x403, 2, 0
+0x0034, 
+    IDC_COMBO_PAGE_SIZE, 0x403, 2, 0
+0x0038, 
+    IDC_COMBO_PAGE_SIZE, 0x403, 3, 0
+0x3631, "\000" 
+    IDC_COMBO_PAGE_SIZE, 0x403, 3, 0
+0x3233, "\000" 
+    IDC_COMBO_PAGE_SIZE, 0x403, 3, 0
+0x3436, "\000" 
+    IDC_COMBO_PAGE_SIZE, 0x403, 4, 0
+0x3231, 0x0038, 
+    IDC_COMBO_PAGE_SIZE, 0x403, 4, 0
+0x3532, 0x0036, 
+    IDC_COMBO_PAGE_SIZE, 0x403, 4, 0
+0x3135, 0x0032, 
+    IDC_COMBO_PAGE_SIZE, 0x403, 5, 0
+0x3031, 0x3432, "\000" 
+    IDC_COMBO_TREE_ORDER, 0x403, 2, 0
+0x0034, 
+    IDC_COMBO_TREE_ORDER, 0x403, 2, 0
+0x0038, 
+    IDC_COMBO_TREE_ORDER, 0x403, 3, 0
+0x3631, "\000" 
+    IDC_COMBO_TREE_ORDER, 0x403, 3, 0
+0x3233, "\000" 
+    IDC_COMBO_TREE_ORDER, 0x403, 3, 0
+0x3436, "\000" 
+    IDC_COMBO_TREE_ORDER, 0x403, 4, 0
+0x3231, 0x0038, 
+    IDC_COMBO_TREE_ORDER, 0x403, 4, 0
+0x3532, 0x0036, 
+    IDC_COMBO_TREE_ORDER, 0x403, 4, 0
+0x3135, 0x0032, 
+    IDC_COMBO_TREE_ORDER, 0x403, 5, 0
+0x3031, 0x3432, "\000" 
+    IDC_COMBO_OP_TYPE, 0x403, 8, 0
+0x6f43, 0x706d, 0x7261, 0x0065, 
+    IDC_COMBO_OP_TYPE, 0x403, 16, 0
+0x6f43, 0x706d, 0x7261, 0x2065, 0x2026, 0x654d, 0x6772, 0x0065, 
+    0
+END
 
 
 /////////////////////////////////////////////////////////////////////////////

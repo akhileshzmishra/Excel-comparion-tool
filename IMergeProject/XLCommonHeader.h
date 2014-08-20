@@ -35,6 +35,7 @@ enum XLCellDataType
 
 
 
+typedef std::wstring WStrType;
 
 
 

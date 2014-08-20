@@ -1,9 +1,20 @@
 #include "StdAfx.h"
 #include "XLComparator.h"
 #include "CommonHeader.h"
+#include "Settings.h"
 
-XLComparator::XLComparator(int baseComparator):
-m_iBaseCellColIndex(baseComparator)
+XLComparator::XLComparator(std::vector<int>& keys):
+m_vUniqueKeys(keys),
+m_iOperationType(XLComparatorOperation_O1),
+m_A(0),
+m_B(0)
+{
+}
+
+XLComparator::XLComparator():
+m_iOperationType(XLComparatorOperation_O1),
+m_A(0),
+m_B(0)
 {
 }
 
@@ -17,26 +28,38 @@ void XLComparator::Reset()
 	m_ChangedRows.clear();
 }
 
+void XLComparator::SetUniqueRows(std::vector<int>& ColNum)
+{
+	m_vUniqueKeys.clear();
+	m_vUniqueKeys = ColNum;
+	if((m_vUniqueKeys.size() == 0))
+	{
+		m_vUniqueKeys.push_back(0); //atleast the first col should become the key
+	}
+}
+
 
 bool XLComparator::Compare(XLCellDataContainer* A, XLCellDataContainer* B)
 {
 	if(!A || !B)
 		return false;
-	Reset();
-	XLCellDataProvider rowProvider1(m_iBaseCellColIndex, A);
-	XLCellDataProvider rowProvider2(m_iBaseCellColIndex, B);
-	m_R1 = A->Row();
-	m_R2 = B->Row();
-	XLDataCompareClass xlcomp(A->Row(), B->Row(), rowProvider1, rowProvider2);
-	int length = 0;
+
+	m_A = A;
+	m_B = B;
+	m_R1 = m_A->Row();
+	m_R2 = m_B->Row();
 
 	try
 	{
-		if(!xlcomp.Compare(m_UnChangedRows))
+		if(!m_CompareBasic())
 		{
 			return false;
+		}		
+		if(SETTINGS_CLASS->GetOperationType() == XLComparatorOperation_O2)
+		{
+			m_RectifyContainers(A, B);
 		}
-		m_FindChangedRows();
+		m_FindChangedRows(A, B);
 	}
 	catch(...)
 	{
@@ -44,7 +67,135 @@ bool XLComparator::Compare(XLCellDataContainer* A, XLCellDataContainer* B)
 	return true;
 }
 
-void XLComparator::m_FindChangedRows()
+
+bool XLComparator::m_CompareBasic()
+{
+	Reset();
+	XLCellDataProvider rowProvider1(m_A);
+	XLCellDataProvider rowProvider2(m_B);	
+	XLDataCompareClass xlcomp(rowProvider1, rowProvider2);
+	return xlcomp.Compare(m_UnChangedRows);
+}
+
+
+void XLComparator::m_RectifyContainers(XLCellDataContainer* A, XLCellDataContainer* B)
+{
+	if(!A || !B || (m_UnChangedRows.size() == 0))
+	{
+		return;
+	}
+
+	XLCellDataProvider rowProviderA(A);
+	XLCellDataProvider rowProviderB(B);	
+	XLDataMaxCompareClass xlcomp(rowProviderA, rowProviderB);
+
+	//We will divide the xcel sheet into sections with consecutive
+	//numbers from m_UnChangedRows
+	int ARowDiff = 0;
+	int BRowDiff = 0;
+
+	int lowerBase = 0;
+	for(int i = 0; i < m_UnChangedRows.size(); i++)
+	{
+		m_UnChangedRows[i].first += ARowDiff;
+		m_UnChangedRows[i].second += BRowDiff;
+		rowProviderA.SetRowLimit(lowerBase, m_UnChangedRows[i].first);
+		rowProviderB.SetRowLimit(lowerBase, m_UnChangedRows[i].second);
+
+		int lengthA = rowProviderA.Span();
+		int lengthB = rowProviderB.Span();
+
+		if(lengthA + lowerBase >= A->Row())
+		{
+			lengthA = A->Row() - lowerBase;
+		}
+		if(lengthB + lowerBase >= B->Row())
+		{
+			lengthB = B->Row() - lowerBase;
+		}
+		RETURNTYPE r;
+		int minChangeA = 0;
+		int minChangeB = 0;
+		if(xlcomp.CompareAPart(r, lengthA, lengthB))
+		{
+			int diffItr = 0;
+			while(diffItr < r.size())
+			{
+				r[diffItr].first += minChangeA;
+				r[diffItr].second += minChangeB;
+				int RA = r[diffItr].first;// - lowerBase;
+				int RB = r[diffItr].second;// - lowerBase;
+				if(RA < RB)
+				{
+					int numRows = RB - RA;
+					A->InsertRowsAt(r[diffItr].first + lowerBase, numRows, true);
+					minChangeA += numRows;
+				}
+				else if(RA > RB)
+				{
+					int numRows = RA - RB;
+					B->InsertRowsAt(r[diffItr].second + lowerBase, numRows, true);
+					minChangeB += numRows;
+				}
+				diffItr++;
+			}
+
+			m_UnChangedRows[i].first += minChangeA;
+			m_UnChangedRows[i].second += minChangeB;
+
+			if(m_UnChangedRows[i].first < m_UnChangedRows[i].second)
+			{
+				int numRows = m_UnChangedRows[i].second - m_UnChangedRows[i].first;
+				A->InsertRowsAt(m_UnChangedRows[i].first, numRows, true);
+				m_UnChangedRows[i].first = m_UnChangedRows[i].second;
+				minChangeA += numRows;
+			}
+			else if(m_UnChangedRows[i].first > m_UnChangedRows[i].second)
+			{
+				int numRows = m_UnChangedRows[i].first - m_UnChangedRows[i].second;
+				B->InsertRowsAt(m_UnChangedRows[i].second, numRows, true);
+				m_UnChangedRows[i].second = m_UnChangedRows[i].first;
+				minChangeB += numRows;
+			}			
+		}
+		//m_UnChangedRows[i].first += minChangeA;
+		//m_UnChangedRows[i].second += minChangeB;
+		ARowDiff += minChangeA;
+		BRowDiff += minChangeB;
+		lowerBase = m_UnChangedRows[i].first;
+	}
+}
+
+
+bool XLComparator::m_CompareUniqueKeys(XLCDRow* r1, XLCDRow* r2)
+{
+	if((m_vUniqueKeys.size() == 0) || !r1 || !r2)
+	{
+		return true;
+	}
+
+	if((m_vUniqueKeys.size() > r1->size()) || (m_vUniqueKeys.size() > r2->size()))
+	{
+		return false;
+	}
+
+	bool Equal = true;
+
+	for(int i = 0; i < m_vUniqueKeys.size(); i++)
+	{
+		if((*r1)[m_vUniqueKeys[i]] == (*r2)[m_vUniqueKeys[i]])
+		{
+			continue;
+		}
+		Equal = false;
+		break;
+	}
+
+	return Equal;
+
+}
+
+void XLComparator::m_FindChangedRows(XLCellDataContainer* A, XLCellDataContainer* B)
 {
 	int R1 = m_R1;
 	int R2 = m_R2;
@@ -94,14 +245,14 @@ void XLComparator::m_FindChangedRows()
 		}
 		jd = 0;
 		while(jd < m_UnChangedRows[0].second)
-		 {
-			 if(j2 < m_ChangedRows.size())
-			 {
+		{
+			if(j2 < m_ChangedRows.size())
+			{
 				m_ChangedRows[j2].second = jd;
 				j2++;
-			 }
-			 jd++;
-		 }
+			}
+			jd++;
+		}
 
 		//For first
 		for(i = 1; i < unchangedRowsSize; i++)
@@ -165,6 +316,10 @@ bool XCellDataComparator::CompareRows(XLCDRow& A, XLCDRow& B)
 	{
 		return false;
 	}
+	if(A.IsDummy() || B.IsDummy())
+	{
+		return true;
+	}
 	for(int i = 0; i < A.size(); i++)
 	{
 		if(A[i] == B[i])
@@ -179,127 +334,35 @@ bool XCellDataComparator::CompareRows(XLCDRow& A, XLCDRow& B)
 	return true;
 }
 
-bool XCellExhaustiveDataComparator::CompareRows(XLCDRow& A, XLCDRow& B)
+
+bool XCellDataMaxComparator::CompareRows(XLCDRow& A, XLCDRow& B)
 {
-	XLRowElementDataProvider rowProvider1(&A);
-	XLRowElementDataProvider rowProvider2(&B);
-	XLRowCompareClass comparator(A.size(), B.size(), rowProvider1, rowProvider2);
-	RETURNTYPE retval;
-	if(comparator.Compare(retval))
+	//return (A[0] == B[0]);
+	if(A.size() != B.size())
 	{
-		if(retval.size() > 0)
+		return false;
+	}
+	if(A.IsDummy() || B.IsDummy())
+	{
+		return true;
+	}
+	int matcher = 0;
+	for(int i = 0; i < A.size(); i++)
+	{
+		if(A[i] == B[i])
 		{
-			return false;
-		}
-		else
-		{
-			return true;
+			matcher++;
 		}
 	}
+
+	double percentage = ((double)matcher/((double)A.size() + 1.0));
+	if(percentage >= SETTINGS_CLASS->GetMatchPercentage())
+	{
+		return true;
+	}
+
 	return false;
 }
 
 
 
-
-XLDifferenceData::XLDifferenceData():
-mRow1(0),
-mRow2(0),
-mNext(NULL),
-mPrevious(NULL),
-mIteratorStarted(false)
-{
-}
-
-
-void XLDifferenceData::InsertDifference(int first, int second)
-{
-	mColList.push_back(XLDifferenceData::Column(first, second));
-}
-XLDifferenceData::Column* XLDifferenceData::GetNextDifference()
-{
-	XLDifferenceData::Column* retVal = NULL;
-	if(!mIteratorStarted)
-	{
-		mItr = mColList.begin();
-		mIteratorStarted = true;
-	}
-	if(mItr != mColList.end())
-	{
-		retVal = &(*mItr);
-		mItr++;
-	}
-	return retVal;
-}
-void XLDifferenceData::RemovePresentColumn()
-{
-	mColList.erase(mItr);
-}
-
-void XLDifferenceData::Reset()
-{
-	mItr = mColList.begin();
-	mIteratorStarted = false;
-}
-
-
-XLDifferenceDataList::XLDifferenceDataList(int intialCap ):
-mList(intialCap, NULL),
-mItr(0),
-mInitialized(false),
-mCapacity(intialCap),
-mSize(0),
-mPos(0)
-{
-}
-
-XLDifferenceData*  XLDifferenceDataList::GetNextDifference()
-{
-	XLDifferenceData* retVal = NULL;
-
-	if(mItr < mSize)
-	{
-		//retVal = (*mItr);
-	}
-	return retVal;
-}
-void XLDifferenceDataList::Reset()
-{
-	mInitialized = false;
-}
-void XLDifferenceDataList::RemovePresentRow()
-{
-	if(mList[mItr])
-	{
-		//if(
-	}
-}
-
-void XLDifferenceDataList::Insert(XLDifferenceData* data)
-{
-	if(mSize == mCapacity)
-	{
-		mCapacity *= 2;
-		mList.resize(mCapacity, NULL);
-	}
-	mList[mPos] = data;
-	int i = mSize - 1;
-	while(i >= 0)
-	{
-		if(mList[i])
-		{
-			mList[i]->SetNext(mSize);
-			mList[mSize]->SetPrevious(i);
-			break;
-		}
-		i--;
-	}
-	mPos++;
-	mSize++;
-}
-
-void XLDifferenceDataList::Clear()
-{
-	Reset();
-	mList.clear();
-}

@@ -65,7 +65,12 @@ CSettingsSM::~CSettingsSM()
 CSettingsSM::CSettingsSM():
 m_DefaultSearchDirection(DefaultSearchDir_DOWN),
 m_bMatchExact(false),
-m_bSetInit(false)
+m_bSetInit(false),
+m_iDefPocketSize(DEF_POCKET_SIZE),
+m_iDefOrder(DEF_ORDER_SIZE),
+m_dMatchPercentage(0.3),
+m_OpType(XLComparatorOperation_O2),
+m_bAutoCompare(true)
 {
 }
 CSettingsSM* CSettingsSM::GetInstance()

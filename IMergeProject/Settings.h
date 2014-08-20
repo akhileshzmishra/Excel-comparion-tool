@@ -13,6 +13,7 @@
 #include <string>
 #include <string.h>
 #include "BoyerMoore.h"
+#include "CommonHeader.h"
 enum
 {
 	FILE_A_LOADED,
@@ -23,6 +24,8 @@ enum
 	SHOW_ALL
 };
 
+#define DEF_POCKET_SIZE 16
+#define DEF_ORDER_SIZE 16
 
 
 class CSettings
@@ -61,6 +64,11 @@ class CSettingsSM
 	bool                    m_bMatchExact;
 	BoyerMoore<wchar_t>     m_wstrComparator;
 	bool                    m_bSetInit;
+	int                     m_iDefPocketSize;
+	int                     m_iDefOrder;
+	double                  m_dMatchPercentage;
+	XLComparatorOperation   m_OpType;
+	bool                    m_bAutoCompare;
 public:
 	~CSettingsSM();
 private:
@@ -74,10 +82,65 @@ public:
 	COLORREF GetSameTextColor();
 	COLORREF GetDifferentTextColor();
 
+	bool GetAutoCompare()
+	{
+		return m_bAutoCompare;
+	}
+
+	void SetAutoCompare(bool set)
+	{
+		m_bAutoCompare = set;
+	}
+
 	std::wstring GetUserString()
 	{
 		return m_UserFindString;
 	}
+	int GetDefaultPocketSize()
+	{
+		return m_iDefPocketSize;
+	}
+	void SetDefaultPocketSize(int size)
+	{
+		if(size > 0)
+		{
+			m_iDefPocketSize = size;
+		}
+	}
+	int GetDefaultOrder()
+	{
+		return m_iDefOrder;
+	}
+	void SetDefaultOrder(int size)
+	{
+		if(size > 0)
+		{
+			m_iDefOrder = size;
+		}
+	}
+
+	double GetMatchPercentage()
+	{
+		return m_dMatchPercentage;
+	}
+
+	void SetMatchPercentage(double percent)
+	{
+		if((percent > 0.0) && (percent < 1.0))
+		{
+			m_dMatchPercentage = percent;
+		}
+	}
+
+	XLComparatorOperation GetOperationType()
+	{
+		return m_OpType;
+	}
+	void SetOperationType(XLComparatorOperation type)
+	{
+		m_OpType = type;
+	}
+
 	void SetUserString(std::wstring& str)
 	{
 		 m_UserFindString = str;
@@ -126,6 +189,9 @@ private:
 	void OnCompareDone();
 };
 
+
+#define SETTINGS_CLASS \
+	CSettingsSM::GetInstance()
 
 
 #endif

@@ -27,6 +27,8 @@
 #define IDI_ICON1                       154
 #define IDB_BITMAP1                     155
 #define IDB_BITMAP_TOOLTIPBTN_LOAD      155
+#define IDD_OPTION_DLG                  156
+#define IDD_DIALOG4                     158
 #define IDC_EDITBOX_EBR                 1000
 #define IDC_EDIT1                       1001
 #define IDC_EDIT2                       1002
@@ -46,6 +48,13 @@
 #define IDC_CHECK1                      1010
 #define IDC_CHECK3                      1013
 #define IDC_CHECK4                      1014
+#define IDC_COMBO_PAGE_SIZE             1021
+#define IDC_COMBO_TREE_ORDER            1022
+#define IDC_COMBO_OP_TYPE               1023
+#define IDC_MATCH_RATIO                 1024
+#define IDC_STATIC_MATCH_RATIO          1025
+#define IDC_STATIC_OPTYPR               1026
+#define IDC_CHECK_AUTO_COMPARE          1029
 #define ID_LOAD_FILE_ONE                32772
 #define ID_SETTING_LOAD                 32775
 #define ID_LOAD_FILEONE                 32776
@@ -81,14 +90,15 @@
 #define ID_MOVERIGHTddddd               32815
 #define ID_MOVELEFTdddddd               32816
 #define ID_PREVIOUS_DIFFdddddd          32817
+#define ID_SETTING_OPTIONS              32818
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        156
-#define _APS_NEXT_COMMAND_VALUE         32818
-#define _APS_NEXT_CONTROL_VALUE         1016
+#define _APS_NEXT_RESOURCE_VALUE        159
+#define _APS_NEXT_COMMAND_VALUE         32819
+#define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           102
 #endif
 #endif

@@ -10,6 +10,8 @@
 #include "CEditDialogBox.h"
 #include "CommonHeader.h"
 #include "AskBeforeExit.h"
+#include "Settings.h"
+
 
 
 #ifdef _DEBUG
@@ -53,6 +55,7 @@ BEGIN_MESSAGE_MAP(IMergeProjectView, CView)
 	ON_WM_LBUTTONDOWN()
 	
 	ON_COMMAND(ID_EDIT_UNDO, &IMergeProjectView::OnEditUndo)
+	ON_COMMAND(ID_SETTING_OPTIONS, &IMergeProjectView::OnSettingOptions)
 END_MESSAGE_MAP()
 
 // IMergeProjectView construction/destruction
@@ -68,7 +71,8 @@ m_Utility(NULL),
 m_CompareDlg(NULL),
 m_SaveDialog(NULL),
 m_AskBeforeExitDlg(NULL),
-m_FindDlg(NULL)
+m_FindDlg(NULL),
+m_OptionsDlg(NULL)
 {
 	// TODO: add construction code here
 	m_DiffIndicator[0] = NULL;
@@ -302,7 +306,7 @@ void IMergeProjectView::OnLoadFileOne()
 			delete m_CompareDlg;
 			m_CompareDlg = 0;
 			m_bLoadFileA = bResult;
-			if(m_bLoadFileB&& m_bLoadFileA)
+			if(m_bLoadFileB&& m_bLoadFileA && SETTINGS_CLASS->GetAutoCompare())
 			{
 				OnFileCompare();
 			}
@@ -341,7 +345,7 @@ void IMergeProjectView::OnLoadFileTwo()
 			delete m_CompareDlg;
 			m_CompareDlg = 0;
 			m_bLoadFileB = bResult;
-			if(m_bLoadFileB&& m_bLoadFileA)
+			if(m_bLoadFileB&& m_bLoadFileA && SETTINGS_CLASS->GetAutoCompare())
 			{
 				OnFileCompare();
 			}
@@ -791,4 +795,35 @@ void IMergeProjectView::OnEditUndo()
 	catch(...)
 	{
 	} 
+}
+
+void IMergeProjectView::OnSettingOptions()
+{
+	// TODO: Add your command handler code here m_OptionsDlg
+	try
+	{
+		if(	m_OptionsDlg)
+		{
+			delete m_OptionsDlg;
+		}
+		m_OptionsDlg = NULL;
+
+		m_OptionsDlg = new COptionSettings(this);
+		if(m_OptionsDlg)
+		{
+			if(m_OptionsDlg->DoModal() == IDOK)
+			{
+			}
+
+			if(	m_OptionsDlg)
+			{
+				delete m_OptionsDlg;
+			}
+			m_OptionsDlg = NULL;
+		}
+	}
+	catch(...)
+	{
+		AfxMessageBox(L"Settings Dialog cannot be displayed. Sorry");
+	}
 }

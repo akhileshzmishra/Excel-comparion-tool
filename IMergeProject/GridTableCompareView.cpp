@@ -639,6 +639,10 @@ CompareResult GridTableCompareView::Compare(XLTableParam param)
 
 		if(m_Comparator.Compare(m_ContainerList[FIRST_TABLE], m_ContainerList[SECOND_TABLE]))
 		{
+			m_SetMaxRowColForGridCreation();
+			m_ContainerList[FIRST_TABLE]->ResizeToNew(m_iMaxRow, m_iMaxCol);
+			m_ContainerList[SECOND_TABLE]->ResizeToNew(m_iMaxRow, m_iMaxCol);
+
 			if(m_Comparator.ChangedRows().size() == 0)
 			{
 				result = CompareResult_Success_NoChange;
@@ -1190,6 +1194,8 @@ void GridTableCompareView::FormatATable(int tableI)
 	COLORREF diffColor = DARKREDCOL;
     COLORREF tstDiffColor = BLUECOL;
 
+	COLORREF EmptyColor = LIGHTGRAYCOLOR;
+
 	CellIdentifier gC;
 	CellIdentifier ContC;
 	int dbRow = 0;
@@ -1205,15 +1211,24 @@ void GridTableCompareView::FormatATable(int tableI)
 		{
 			dbRow = rowCompItr.GetValue()->Row2;
 		}
-		
+		bool isDummy = m_ContainerList[tableI]->IsDummy(dbRow);
+		bool isEmpty = false;
+		if(!isDummy)
+		{
+			isEmpty = m_ContainerList[tableI]->IsEmpty(dbRow);
+		}
 		for(int k = 0; k < m_ContainerList[tableI]->Col(); k++)
 		{
 			ContC.Set(dbRow, k);
 			m_GridToContainerMap[tableI].FindFirst(ContC, gC);
 			if(tableI == FIRST_TABLE)
 			{
-				int c2 = 0;				
-				if(rowCompItr.GetValue()->FindC1(k, c2))
+				int c2 = 0;		
+				if(isDummy || isEmpty)
+				{
+					m_GridList[tableI]->SetItemBkColour(gC.X(), gC.Y(), EmptyColor);
+				}
+				else if(rowCompItr.GetValue()->FindC1(k, c2))
 				{					
 					m_GridList[tableI]->SetItemBkColour(gC.X(), gC.Y(), diffColor);
 					m_GridList[tableI]->SetItemFgColour(gC.X(), gC.Y(), tstDiffColor);
@@ -1228,7 +1243,11 @@ void GridTableCompareView::FormatATable(int tableI)
 			else
 			{
 				int c1 = 0;
-				if(rowCompItr.GetValue()->FindC2(k, c1))
+				if(isDummy)
+				{
+					m_GridList[tableI]->SetItemBkColour(gC.X(), gC.Y(), EmptyColor);
+				}
+				else if(rowCompItr.GetValue()->FindC2(k, c1))
 				{
 					m_GridList[tableI]->SetItemBkColour(gC.X(), gC.Y(), diffColor);
 					m_GridList[tableI]->SetItemFgColour(gC.X(), gC.Y(), tstDiffColor);
@@ -1239,8 +1258,8 @@ void GridTableCompareView::FormatATable(int tableI)
 				   m_GridList[tableI]->SetItemBkColour(gC.X(), k, sameColor);
 				   m_GridList[tableI]->SetItemFgColour(gC.X(), k, txtSameColor);
 				}
-			}
-		}		
+			}	
+		}
 		rowCompItr++;
 	}
 }
@@ -1956,9 +1975,14 @@ void GridTableCompareView::mSaveToDataBase(int r, int c, CString& value)
 	{
 		if(m_GridToContainerMap[0].FindSecond(grid, cell))
 		{
-			XLCellData* cellData = m_ContainerList[0]->CellData(cell.X(), cell.Y());
-			if(cellData)
+			XLCDRow* cellRow = m_ContainerList[0]->CellRow(cell.X());
+			if(cellRow)
 			{
+				if(cellRow->IsDummy())
+				{
+					return;
+				}
+				XLCellData* cellData = &(*cellRow)[cell.Y()];
 				RecordInHistory(0, cell, cellData);
 				cellData->SetDataAndIndentifyType(value);
 			}
@@ -1970,9 +1994,14 @@ void GridTableCompareView::mSaveToDataBase(int r, int c, CString& value)
 	{
 		if(m_GridToContainerMap[1].FindSecond(grid, cell))
 		{
-			XLCellData* cellData = m_ContainerList[1]->CellData(cell.X(), cell.Y());
-			if(cellData)
+			XLCDRow* cellRow = m_ContainerList[1]->CellRow(cell.X());
+			if(cellRow)
 			{
+				if(cellRow->IsDummy())
+				{
+					return;
+				}
+				XLCellData* cellData = &(*cellRow)[cell.Y()];
 				RecordInHistory(1, cell, cellData);
 				cellData->SetDataAndIndentifyType(value);
 			}

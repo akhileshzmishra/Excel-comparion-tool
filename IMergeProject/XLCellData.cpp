@@ -385,6 +385,73 @@ bool XLCellData::ForceCompare(std::wstring& wstr)
 }
 
 
+bool XLCellData::ExactCompare(std::wstring& wstr)
+{
+	//memset(ConvertingPlace,0, sizeof(ConvertingPlace));
+	bool isEqual = false;
+	switch(Type())
+	{
+	case Integer:
+		{
+			std::sprintf(ConvertingPlace, "%d", m_vData.m_iData);
+			string str((const char*)ConvertingPlace);
+			wstring datastr(str.begin(), str.end());
+			if(datastr.compare(wstr) == 0)
+			{
+				isEqual = true;
+			}
+		}
+		break;
+	case Double:
+		{
+			std::sprintf(ConvertingPlace, "%f", m_vData.m_dData);
+			string str((const char*)ConvertingPlace);
+			wstring datastr(str.begin(), str.end());
+			if(datastr.compare(wstr) == 0)
+			{
+				isEqual = true;
+			}
+		}
+		break;
+	case String:
+		{
+			wstring datastr(m_vData.m_pstrData->begin(), m_vData.m_pstrData->end());
+			if(datastr.compare(wstr) == 0)
+			{
+				isEqual = true;
+			}
+		}
+		break;
+	case Char:
+		{
+			ConvertingPlace[0] = m_vData.m_cData;
+			ConvertingPlace[1] = 0;
+			string str((const char*)ConvertingPlace);
+			wstring datastr(str.begin(), str.end());
+			if(datastr.compare(wstr) == 0)
+			{
+				isEqual = true;
+			}
+		}		
+		break;
+
+	case WString:
+		{
+			if(m_vData.m_pwstrData->compare(wstr) == 0)
+			{
+				isEqual = true;
+			}
+		}		
+		break;
+	case InvalidDataType:
+		break;
+	default:
+		break;
+	}
+
+	return isEqual;
+}
+
 bool XLCellData::operator == (XLCellData& other)
 {
 	if(Type() != other.Type())

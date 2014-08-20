@@ -7,67 +7,6 @@
 #include "XLLCS.h"
 #include "CommonHeader.h"
 
-class XLDifferenceData
-{
-public:
-	struct Column
-	{
-		int mCol1;
-		int mCol2;
-		Column():mCol1(0), mCol2(0) {}
-		Column(int c1,int c2): mCol1(c1),mCol2(c2) {}
-	};
-private:
-	int mRow1;
-	int mRow2;
-	int mNext;
-	int mPrevious;
-	typedef std::list<Column> DifferenceList;
-	typedef DifferenceList::iterator DiffListItr;
-	DifferenceList  mColList;
-	DiffListItr     mItr;
-	bool            mIteratorStarted;
-	
-
-public:
-	XLDifferenceData();
-	int& Row1()             {return mRow1;}
-	int& Row2()             {return mRow2;}
-	int RowDiffSize()       {return (int) mColList.size();}
-	void InsertDifference(int first, int second);
-	XLDifferenceData::Column* GetNextDifference();
-	void RemovePresentColumn();
-	void SetNext(int next)
-	{
-		mNext = next;
-	}
-	void SetPrevious(int prev)
-	{
-		mPrevious = prev;
-	}
-	void Reset();
-};
-
-
-class XLDifferenceDataList
-{
-	typedef std::vector<XLDifferenceData*> DifferenceData;
-	DifferenceData  mList;
-	int             mItr;
-	bool            mInitialized;
-	int             mCapacity;
-	int             mSize;
-	int             mPos;
-public:
-	XLDifferenceDataList(int intialCap = 2);  
-	int RowSize()             {return mSize;}
-	XLDifferenceData*  GetNextDifference();
-	void Reset();
-	void Clear();
-	void RemovePresentRow();
-	void Insert(XLDifferenceData* data);
-};
-
 
 class XCellDataComparator
 {
@@ -81,47 +20,99 @@ private:
 	bool CompareRows(XLCDRow& A, XLCDRow& B);
 };
 
-class XLCellDataProvider
+class XCellDataMaxComparator
 {
-	int m_iRowBase;
-	XLCellDataContainer* m_pContainer;
 public:
-	XLCellDataProvider(int base, XLCellDataContainer* container):
-	  m_iRowBase(base),
-	  m_pContainer(container)
-	  {
-	  }
-
-	  void SetContainer(XLCellDataContainer* container)
-	  {
-		  m_pContainer = container;
-	  }
-
-	  XLCDRow& operator [](int i)
-	  {
-		  return *(m_pContainer->CellRow(i));
-	  }
+	bool operator() (XLCDRow& A, XLCDRow& B)
+	{
+		return CompareRows(A, B);
+	}
+private:
+	bool CompareRows(XLCDRow& A, XLCDRow& B);
 };
 
-typedef vector<int> XLCompareColumnType;
-typedef XLLCS<XCellDataComparator, XLCellDataProvider>    XLDataCompareClass;
+class XLCellDataProvider
+{
+	XLCellDataContainer* m_pContainer;
+	int m_iR1;
+	int m_iR2;
+public:
+	XLCellDataProvider(XLCellDataContainer* container):
+	m_pContainer(container),
+	m_iR1(0),
+	m_iR2(m_pContainer? m_pContainer->Row() - 1: 0)
+	{
+	}
+
+	void SetContainer(XLCellDataContainer* container)
+	{
+		m_pContainer = container;
+	}
+
+	void SetRowLimit(int r1, int r2)
+	{
+		m_iR1 = r1;
+		m_iR2 = r2;
+	}
+
+	int Size()
+	{
+		return (m_iR2 - m_iR1 + 1);
+	}
+
+	int Span()
+	{
+		return (m_iR2 - m_iR1 + 1);
+	}
+
+	XLCDRow& operator [](int i)
+	{
+		return *(m_pContainer->CellRow(i + m_iR1));
+	}
+};
+
+
+typedef XLLCS<XCellDataComparator, XLCellDataProvider>       XLDataCompareClass;
+typedef XLLCS<XCellDataMaxComparator, XLCellDataProvider>    XLDataMaxCompareClass;
+
+
+
+
+
 
 class XLComparator
 {
-	int         m_iBaseCellColIndex;
-	RETURNTYPE  m_UnChangedRows;
-	RETURNTYPE  m_ChangedRows;
-	int         m_R1;
-	int         m_R2;
+	RETURNTYPE             m_UnChangedRows;
+	RETURNTYPE             m_ChangedRows;
+	std::vector<int>       m_OnlyInA;
+	std::vector<int>       m_OnlyInB;
+	int                    m_R1;
+	int                    m_R2;
+	std::vector<int>       m_vUniqueKeys; //identifier key set
+	XLComparatorOperation  m_iOperationType;
+	XLCellDataContainer*   m_A;
+	XLCellDataContainer*   m_B;
 public:
-	XLComparator(int baseComparator = 0);
+	XLComparator(std::vector<int>& keys);
+	XLComparator();
 	~XLComparator(void);
 	bool Compare(XLCellDataContainer* A, XLCellDataContainer* B);
 	RETURNTYPE& UnChangedRows()   { return	m_UnChangedRows;}
 	RETURNTYPE& ChangedRows()	  { return	m_ChangedRows;}
 	void Reset();
+	void SetOperationType(XLComparatorOperation op)
+	{
+		m_iOperationType = op;
+	}
+	void SetUniqueRows(std::vector<int>& ColNum);
 private:
-	void m_FindChangedRows();
+	void m_FindChangedRows(XLCellDataContainer* A, XLCellDataContainer* B);
+	void m_RectifyContainers(XLCellDataContainer* A, XLCellDataContainer* B);
+
+	bool m_CompareUniqueKeys(XLCDRow* r1, XLCDRow* r2);
+
+	bool m_CompareBasic();
+
 };
 
 
@@ -185,5 +176,12 @@ inline bool XLRowDataComparator::CompareCells(XLCellData& one, XLCellData& two)
 {
 	return (one == two);
 }
+
+
+
+
+
+
+
 
 #endif

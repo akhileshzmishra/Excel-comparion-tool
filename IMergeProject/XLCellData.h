@@ -47,6 +47,7 @@ public:
 	bool GetFormula(std::string& str);
 
 	bool ForceCompare(std::wstring& wstr);
+	bool ExactCompare(std::wstring& wstr);
 
 	bool IsEmpty()
 	{

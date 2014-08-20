@@ -78,6 +78,11 @@ public:
 		return m_iMaxRow;
 	}
 
+	int GetMaxCol()
+	{
+		return m_iMaxCol;
+	}
+
 	CompareResult Compare(XLTableParam param = XLTableParamFullTable);
 
 	void ResetTables();

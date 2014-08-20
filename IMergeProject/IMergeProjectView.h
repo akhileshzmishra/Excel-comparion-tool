@@ -14,6 +14,7 @@
 #include "FindItemDlg.h"
 #include "SideBar.h"
 #include "ToolTipRessourceButton.h"
+#include "OptionSettings.h"
 
 
 class IMergeProjectView : public CView
@@ -33,6 +34,7 @@ protected: // create from serialization only
 	CSaveDialog*                     m_SaveDialog;
 	CAskBeforeExit*                  m_AskBeforeExitDlg;
 	CFindItemDlg*                    m_FindDlg;
+	COptionSettings*                 m_OptionsDlg;
 	CSideBar                         m_SideBar;
 
 protected:
@@ -121,6 +123,7 @@ public:
 	afx_msg void OnFindPrevUserString();
 	afx_msg void OnFindClosed();
 	afx_msg void OnEditUndo();
+	afx_msg void OnSettingOptions();
 };
 
 #ifndef _DEBUG  // debug version in DeepikaProjectView.cpp

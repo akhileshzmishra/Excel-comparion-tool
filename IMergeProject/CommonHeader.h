@@ -52,6 +52,10 @@
 #define DARKSLATEGRAYCOL RGB(49, 79, 79)
 #endif
 
+#ifndef LIGHTGRAYCOLOR
+#define LIGHTGRAYCOLOR RGB(149, 149, 149)
+#endif
+
 #ifndef DARKREDCOL
 #define DARKREDCOL RGB(255, 100, 100)
 #endif
@@ -71,6 +75,16 @@
 
 typedef pair<int, int>    ComparedDataPair;	 
 typedef	vector<ComparedDataPair >  CompareListType;
+
+enum XLComparatorOperation
+{
+	XLComparatorOperation_O1, // Leave all the rows where any row is different
+	XLComparatorOperation_O2, // Leave all the rows where identifier key is same and create new rows when they are different
+
+
+	XLComparatorOperation_Max
+
+};
 
 
 class RowComparisonComparator
