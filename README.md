@@ -27,9 +27,10 @@ and _l_ be the length of string
 
 |Sn |Data structure| Usage  |
 |---|--------------|---------|
-|1  |Linked list based upon observer pattern| Even if linked list is getting manipulated, iterator should not become invalid|
-|2  |Trie | For finding out closest matched files in the folder |
-|3  |Map duals | creating map from and to view and database|
+|1  |B Tree based storage tree | For fast retrieval, deletion and insertion and importantly preservation of sequence as that happens in linked list.
+|2  |Linked list based upon observer pattern| Even if linked list is getting manipulated, iterator should not become invalid|
+|3  |Trie | For finding out closest matched files in the folder |
+|4  |Map duals | creating map from and to view and database|
 
 
 
@@ -71,6 +72,30 @@ We have tried to give professional look and feel to the application. It has sear
 The tool also has ways of editing/copying/transferring contents from left file to right file.
 
 This tool is build with MFC. I am really sorry about using this old technology. This project started as an intern project in which I acted as a mentor. But with growing demand inside our company, we had to make it more professional by adding various features.
+
+_Data structure_ used for table has been upgraded to modified B tree now:
+1. _Insertion takes at  most log n time_.
+2. _Lookup takes at most log n time_
+3. _Deletion takes at most log n time_
+4. _After any insertion/deletion, the index rearranges itself so that index is consecutive_.
+
+As an example
+There are 10 elements indexed from 1 - to - 10.
+1(A) 2(B) 3(C) 4(D) 5(E) 6(F) 7(G) 8(H) 9(I) 10(J)
+After an insertion at 4th place the elements should be
+1(A) 2(B) 3(C) 4(Insert) 5(D) 6(E) 7(F) 8(G) 9(H) 10(I) 11(J)
+
+This can be achieved by a list but every other operation would be terribly slow. With any combination of primitive data structure available in stl, it was not possible to have a fast look up, fast insertion/ deletion while still preserving index.
+
+_My concept is like this_
+Store every thing in a leaf node. 
+When leaf node is full, bifurcate it and create a new parent element. Add the bifurcated parts to the parent node.
+Now parent here is not a leaf node but its children are. So there are two types of storage capacity
+Storage capacity of the leaf(_actual data also called Pocket Size in the code_)
+Storage capacity of every other node.(_also called Order in the code_)
+When there is any insertion, keep the data in the appropriate storage leaf node. if it is full, bifurcate it and 
+rearrange the whole node tree.
+
 
 _Finally_
 -----------
