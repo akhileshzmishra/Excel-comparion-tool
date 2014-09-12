@@ -8,7 +8,10 @@
 #include "PositionManager.h"
 #include "LinkedList.h"
 #include <stack>
+#include "InternalSmartPointer.h"
 
+namespace XLHistoryData
+{
 
 struct HistDataPair
 {
@@ -37,31 +40,32 @@ struct HistDataPair
 	}
 };
 
-typedef LinkedList<HistDataPair> HistoryLinkedList;
-typedef LinkedListItr<HistDataPair> HistoryLinkedListItr;
+typedef LinkedList<HistDataPair>     HistoryLinkedList;
+typedef LinkedListItr<HistDataPair>  HistoryLinkedListItr;
+typedef LListNode<HistDataPair>      HistoryNode;
+typedef XLSmartPtr<HistDataPair>     HistoryDataSPtr;
 
 class CHistoryData
 {
 	HistoryLinkedList                   mHistoryData;
-	int                                 mHistorySize;
-	HistoryLinkedListItr                mCurrentIndex;
-	int                                 mBaseIdx;
-	const int                           mHistoryMaxSize;
+	int                                 mHistoryMaxSize;
 public:
 	CHistoryData(void);
 	~CHistoryData(void);
 
 	void Insert(HistDataPair& histData);
-	HistDataPair* FindRecentAndPop();
+	HistoryDataSPtr FindRecentAndPop();
 	HistDataPair* FindRecent();	
-	int Size()                                 { return mHistorySize;} 
+	int Size()                                 { return mHistoryData.Size();} 
 	int MaxSize()                              { return mHistoryMaxSize;}
+
+	void SetHistoryMaxSize(int size);
 
 	void Clear();
 
 };
 
 
-
+};
 
 #endif
