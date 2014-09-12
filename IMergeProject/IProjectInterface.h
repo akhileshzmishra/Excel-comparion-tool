@@ -5,31 +5,46 @@
 
 enum XLEventType
 {
-	GRID_NONE = WM_USER + 1000,
-	GRID_VSCROLL,
-	GRID_HSCROLL,
+	XLEVENT_EVENT_NONE = WM_USER + 1000 /* Offset*/,
+
+	//Scroll commands for view
+	XLEVENT_GRID_VSCROLL,
+	XLEVENT_GRID_HSCROLL,
+
+	//Command for arrow button
+	XLEVENT_POINTER_LEFT_MOVE,
+	XLEVENT_POINTER_RIGHT_MOVE,
+
+	//Command for DPTextBox. This is used to save files at the end if there is any change
+	XLEVENT_LEFT_FILE_CHANGED,
+	XLEVENT_RIGHT_FILE_CHANGED,
+	XLEVENT_FILE_SAVED,
+
+	XLEVENT_COMPARE_DONE,
+
+	//Command for Sidebar. This is used to fill and change the display of sidebar
+	XLEVENT_SIDEBAR_MAKE_ALL,
+	XLEVENT_SIDEBAR_MAKE_ONE,
+	XLEVENT_SIDEBAR_MAKE_NONE,
 
 
-
-
-	GRID_POINTER_MOVE_LEFT,
-	GRID_POINTER_MOVE_RIGHT,
-
-
-	GRID_LEFT_FILE_CHANGED,
-	GRID_RIGHT_FILE_CHANGED,
-	GRID_FILE_SAVED,
-
-	GRID_ON_COMPARE_DONE,
-
-
-	EVENTTYP_MAX
+	XLEVENT_EVENTTYP_MAX
 };
 
 
 enum XLWindowEventType
 {
-	WM_MODELESS_CLOSED = EVENTTYP_MAX + 1
+	WM_MODELESS_CLOSED = XLEVENT_EVENTTYP_MAX + 1
+};
+
+enum
+{
+	XL_SIDEBAR_ACTION_DELETE_LINE_T1,
+	XL_SIDEBAR_ACTION_DELETE_LINE_T2,
+	XL_SIDEBAR_ACTION_ADD_LINE_T1,
+	XL_SIDEBAR_ACTION_ADD_LINE_T2,
+
+	XL_SIDEBAR_ACTION_MAX
 };
 
 struct XLObservedData
@@ -37,7 +52,7 @@ struct XLObservedData
 	XLEventType EventType;
 	int Data;
 	int Action;
-	XLObservedData():EventType(GRID_NONE),Data(0), Action(0){}
+	XLObservedData():EventType(XLEVENT_EVENT_NONE),Data(0), Action(0){}
 	XLObservedData(char* dest)
 	{
 		int x = 0;
@@ -84,9 +99,11 @@ public:
 		return m_Observer;
 	}
 	virtual void SaveToDatabase(int r, int c, CString& value) = 0;
-	virtual void SaveToTable(int r, int c, CString& value, int table) = 0;
+	//virtual void SaveToTable(int r, int c, CString& value, int table) = 0;
 	virtual void OnCopyFromRightToLeft(int r1, int r2, int c1, int c2) = 0;
 	virtual void OnCopyFromLeftToRight(int r1, int r2, int c1, int c2) = 0;
+	virtual void OnMoveFromRightToLeft(int r1, int r2, int c1, int c2) = 0;
+	virtual void OnMoveFromLeftToRight(int r1, int r2, int c1, int c2) = 0;
 };
 
 template<class T, class X>
