@@ -1,10 +1,9 @@
 #include "StdAfx.h"
 #include "HistoryData.h"
 
+using namespace XLHistoryData;
+
 CHistoryData::CHistoryData(void):
-mHistorySize(0),
-mCurrentIndex(&mHistoryData),
-mBaseIdx(0),
 mHistoryMaxSize(MAX_HISTORY_SIZE)
 {
 }
@@ -16,71 +15,49 @@ CHistoryData::~CHistoryData(void)
 
 void CHistoryData::Insert(HistDataPair& histData)
 {
-	if(mHistorySize == 0)
+	if(mHistoryData.Size() == mHistoryMaxSize)
 	{
-		mHistoryData.InsertAtBack(histData);
-		mBaseIdx = 1;
-		mHistorySize++;
+		HistDataPair output;
+		mHistoryData.RemoveFromBack(output);
 	}
-	else if(mHistorySize < mHistoryMaxSize)
-	{
-		if(mCurrentIndex.AtFirst() && (mBaseIdx == 0))
-		{
-			mCurrentIndex.Node()->Data() = histData;
-			mBaseIdx = 1;
-		}
-		else if(mCurrentIndex.HasNext())
-		{
-			mCurrentIndex++;
-			mCurrentIndex.Node()->Data() = histData;
-			mBaseIdx++;
-		}
-		else
-		{
-			mHistoryData.InsertAtBack(histData);
-			mCurrentIndex++;
-			mHistorySize++;
-			mBaseIdx++;
-		}
-	}
-	else
-	{
-		mHistoryData.PopFrontPushBack();
-		mCurrentIndex++;
-		mCurrentIndex.Node()->Data() = histData;
-	}
+	mHistoryData.InsertAtBack(histData);
 }
 
 
-HistDataPair* CHistoryData::FindRecentAndPop()
+HistoryDataSPtr CHistoryData::FindRecentAndPop()
 {
-	if(mHistorySize <= 0)
+	HistDataPair histData;
+	if(mHistoryData.RemoveFromBack(histData))
 	{
-		return 0;
+		HistoryDataSPtr retVal(new HistDataPair(histData));		
+		return retVal;
 	}
-	HistDataPair* recentElement = mCurrentIndex.Value();
-	if(mCurrentIndex.HasPrevious())
-	{ 		
-		mCurrentIndex--;
-		mBaseIdx--;
-		
-	}
-	return recentElement;
-	
+	return HistoryDataSPtr(0);	
 }
 
 HistDataPair* CHistoryData::FindRecent()
 {
-	if(mHistorySize <= 0)
+	if(mHistoryData.BackNode())
 	{
-		return 0;
+		return &(mHistoryData.BackNode()->Data());
 	}
-	HistDataPair* recentElement = mCurrentIndex.Value();
-	return recentElement;
+	return 0;
 }
 
 void CHistoryData::Clear()
 { 
-	mCurrentIndex.Reset();
-	mBaseIdx = 0;
+	mHistoryData.Clear();
+}
+
+void CHistoryData::SetHistoryMaxSize(int size)
+{
+	if(size > 0)
+	{
+		mHistoryMaxSize = size;
+		HistDataPair histData;
+		while(mHistoryData.Size() >= mHistoryMaxSize)
+		{
+			mHistoryData.RemoveFromBack(histData);
+		}
+	}
 }
