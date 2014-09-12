@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "DPTextBox.h"
 #include "GridTableCompareView.h"
+#include "Settings.h"
 
 DPTextBox::DPTextBox(RECT rect)	:
 XLCtrlObserver(GridTableCompareView::GetInstance(),0,0),
@@ -39,24 +40,40 @@ void DPTextBox::Create(CView* parent, RECT rect, bool bLeft)
 	m_Create();
 	if(m_bLeft)
 	{
-		Register(GRID_LEFT_FILE_CHANGED);
+		Register(XLEVENT_LEFT_FILE_CHANGED);
 	}
 	else
 	{
-		Register(GRID_RIGHT_FILE_CHANGED);
+		Register(XLEVENT_RIGHT_FILE_CHANGED);
 	}
-	Register(GRID_FILE_SAVED);
+	Register(XLEVENT_FILE_SAVED);
 }
 
 void DPTextBox::Notify(XLObservedData* data, XLEventType* condition)
 {
-	if(*condition == GRID_FILE_SAVED)
+	if(*condition == XLEVENT_FILE_SAVED)
 	{
 	   m_SetDirty(false);
+	   if(m_bLeft)
+	   {
+		   SETTINGS_CLASS->SetFileAChanged(false);
+	   }
+	   else
+	   {
+		   SETTINGS_CLASS->SetFileBChanged(false);
+	   }
 	}
 	else
 	{
 		m_SetDirty(true);
+		if(m_bLeft)
+		{
+			SETTINGS_CLASS->SetFileAChanged(true);
+		}
+		else
+		{
+			SETTINGS_CLASS->SetFileBChanged(true);
+		}
 	}
 }
 
@@ -105,7 +122,7 @@ void DPTextBox::m_Create()
 	if(m_Parent && !m_bCreate)
 	{
 		static int uint = 7839723;
-		m_bCreate = CEdit::Create( ES_AUTOHSCROLL | WS_BORDER | ES_LEFT , m_Rectangle, m_Parent, uint++);
+		m_bCreate = _Parent::Create(ES_AUTOHSCROLL | WS_BORDER | ES_LEFT, m_Rectangle, m_Parent, uint++);
 
 		if(m_bCreate)
 		{
@@ -113,7 +130,7 @@ void DPTextBox::m_Create()
 			//SetBkColor(DARKSLATEGRAYCOL);
 			//SetText(std::string("File Name will be displayed here"));
 			EnableTrackingToolTips(TRUE);
-			SetMargins(10, 100);
+			//SetMargins(10, 100);
 			ShowWindow(SW_SHOW);
 		}
 
