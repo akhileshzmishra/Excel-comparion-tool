@@ -6,6 +6,8 @@
 #include "Settings.h"
 #include "GridViewHelper.h"
 #include "HistoryManager.h"
+using namespace XLHistory;
+
 
 GridTableCompareView* GridTableCompareView::m_Instance = 0;;
 
@@ -56,9 +58,9 @@ m_bReady(false),
 m_iMaxRow(10),
 m_iMaxCol(10),
 m_pParentWnd(0),
-m_CompItr(&m_iChangedCols)
+m_CompItr(&m_ChangedRowList)
 {
-	m_CurrentState = XLTableParamFullTable;
+	m_CurrentState = XLTableParamReloadTable;
 }
 
 GridTableCompareView::~GridTableCompareView(void)
@@ -82,7 +84,7 @@ bool GridTableCompareView::Load()
 	return (fileA & fileB);
 }
 
-void GridTableCompareView::m_SetMaxRowColForGridCreation()
+void GridTableCompareView::__SetMaxSizeForGridCreation()
 {
 	m_iMaxRow = 10;
 	m_iMaxCol = 10;
@@ -134,6 +136,7 @@ bool GridTableCompareView::LoadTableA(std::string path)
 		{
 			return bRet;
 		}
+		m_ContainerList[FIRST_TABLE]->AddRows(2);
 		if(!m_ContainerList[FIRST_TABLE] || !m_ContainerList[SECOND_TABLE])
 		{
 			m_bReady = false;
@@ -142,14 +145,14 @@ bool GridTableCompareView::LoadTableA(std::string path)
 		{
 			m_bReady = true;
 		}
-		m_SetMaxRowColForGridCreation();
-		CreateGrid(m_GridList[FIRST_TABLE], m_ContainerList[FIRST_TABLE], FIRST_TABLE);
+		__SetMaxSizeForGridCreation();
+		__CreateGridView(m_GridList[FIRST_TABLE], m_ContainerList[FIRST_TABLE], FIRST_TABLE);
 		EnableHistory(false);
 		for(int j = 0; j < m_ContainerList[FIRST_TABLE]->Row(); j++)
 		{
 			for(int k = 0; k < m_ContainerList[FIRST_TABLE]->Col(); k++)
 			{
-				m_fillGrid(m_GridList[FIRST_TABLE], m_ContainerList[FIRST_TABLE], j, k);
+				__FillGrid(m_GridList[FIRST_TABLE], m_ContainerList[FIRST_TABLE], j, k);
 			}
 		}
 		EnableHistory(true);
@@ -179,6 +182,7 @@ bool GridTableCompareView::LoadTableB(std::string path)
 		{
 			return bRet;
 		}
+		m_ContainerList[SECOND_TABLE]->AddRows(2);
 		if(!m_ContainerList[FIRST_TABLE] || !m_ContainerList[SECOND_TABLE])
 		{
 			m_bReady = false;
@@ -187,14 +191,14 @@ bool GridTableCompareView::LoadTableB(std::string path)
 		{
 			m_bReady = true;
 		}
-		m_SetMaxRowColForGridCreation();
-		CreateGrid(m_GridList[SECOND_TABLE], m_ContainerList[SECOND_TABLE], SECOND_TABLE);
+		__SetMaxSizeForGridCreation();
+		__CreateGridView(m_GridList[SECOND_TABLE], m_ContainerList[SECOND_TABLE], SECOND_TABLE);
 		EnableHistory(false);
 		for(int j = 0; j < m_ContainerList[SECOND_TABLE]->Row(); j++)
 		{
 			for(int k = 0; k < m_ContainerList[SECOND_TABLE]->Col(); k++)
 			{
-				m_fillGrid(m_GridList[SECOND_TABLE], m_ContainerList[SECOND_TABLE], j, k);
+				__FillGrid(m_GridList[SECOND_TABLE], m_ContainerList[SECOND_TABLE], j, k);
 			}
 		}
 		EnableHistory(true);
@@ -213,19 +217,19 @@ void GridTableCompareView::CreateTable()
 	{
 		if(IsReady() && m_pParentWnd)
 		{
-			int numTables = NumberofDrawableTables();
+			int numTables = __TotalDrawableTables();
 			XL_UTIL->VerticallyDivideArea(numTables, m_Partitions, m_iTableWidth);
 			for(int i = 0; i < m_ContainerList.size(); i++)
 			{
 				if(!m_ContainerList[i])
 					continue;
-				CreateGrid(m_GridList[i], m_ContainerList[i], i);
+				__CreateGridView(m_GridList[i], m_ContainerList[i], i);
 				EnableHistory(false);
 				for(int j = 0; j < m_ContainerList[i]->Row(); j++)
 				{
 					for(int k = 0; k < m_ContainerList[i]->Col(); k++)
 					{
-						m_fillGrid(m_GridList[i], m_ContainerList[i], j, k);
+						__FillGrid(m_GridList[i], m_ContainerList[i], j, k);
 					}
 				}
 				EnableHistory(true);
@@ -384,7 +388,7 @@ void GridTableCompareView::Find(std::wstring& wstr)
 }
 
 
-void GridTableCompareView::CreateGrid(CGridCtrl*& grid, XLCellDataContainer* container, int position)
+void GridTableCompareView::__CreateGridView(CGridCtrl*& grid, XLCellDataContainer* container, int position)
 {
 	try
 	{
@@ -403,7 +407,7 @@ void GridTableCompareView::CreateGrid(CGridCtrl*& grid, XLCellDataContainer* con
 		//else
 		{ 	
 			CRect rect;
-			int numPartitions = NumberofDrawableTables();
+			int numPartitions = __TotalDrawableTables();
 
 			int r = m_iMaxRow;
 			int c = m_iMaxCol;
@@ -446,7 +450,7 @@ void GridTableCompareView::CreateEmptyGrid()
 {
 	try
 	{
-		int numPartitions = NumberofDrawableTables();
+		int numPartitions = __TotalDrawableTables();
 		XL_UTIL->VerticallyDivideArea(2, m_Partitions, m_iTableWidth);
 		int winHeight = XL_UTIL->GetWindowHeight();
 		for(int i = 0; i < 2; i++)
@@ -492,13 +496,11 @@ void GridTableCompareView::ArrowPosition(int X, int Y)
 		 CellIdentifier gridCell(Row, 1);
 		 CellIdentifier contCell;
 		 m_GridToContainerMap[FIRST_TABLE].FindSecond(gridCell, contCell);
-		 
-		 RowComparison* rc = m_iChangedCols.FindRow1(contCell.X());
-		 if(rc)
+		
+		 if(m_CompItr.MoveToRow(contCell.X(), true))
 		 {
-			 m_CompItr.MoveToIndex(m_iChangedCols.FindIndex1(contCell.X()));
+			 __MoveIndicators();
 		 }
-		 MoveIndicators();
 	 }
 	 else if( X > (m_Partitions[SECOND_TABLE] + m_iTableWidth))
 	 {
@@ -507,18 +509,16 @@ void GridTableCompareView::ArrowPosition(int X, int Y)
 		 CellIdentifier contCell;
 		 m_GridToContainerMap[SECOND_TABLE].FindSecond(gridCell, contCell);
 		 
-		 RowComparison* rc = m_iChangedCols.FindRow2(contCell.X());
-		 if(rc)
+		 if(m_CompItr.MoveToRow(contCell.X(), false))
 		 {
-			 m_CompItr.MoveToIndex(m_iChangedCols.FindIndex2(contCell.X()));
+			 __MoveIndicators();
 		 }
-		 MoveIndicators();
 	 }
 	 //Arrow move
  }
 
 
-void GridTableCompareView::m_fillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int c, int gr, int gc)
+void GridTableCompareView::__FillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int c, int gr, int gc)
 {
 	if(!grid || !container)
 	{
@@ -583,7 +583,7 @@ void GridTableCompareView::m_fillGrid(CGridCtrl* grid, XLCellDataContainer* cont
 	default:
 		break;
 	}
-	bool okay;
+	BOOL okay;
 	okay = grid->SetItemText(gr, gc, item.strText);
 
 	CellIdentifier gridIdentifier(gr, gc);
@@ -601,9 +601,9 @@ void GridTableCompareView::m_fillGrid(CGridCtrl* grid, XLCellDataContainer* cont
 	
 }
 
-void GridTableCompareView::RecordInHistory(int tableID, CellIdentifier contCell, XLCellData* data)
+void GridTableCompareView::__RecordThisInHistory(int tableID, CellIdentifier contCell, XLCellData* data)
 {
-	HistDataPair histData;
+	XLHistoryData::HistDataPair histData;
 	histData.Data = *data;
 	histData.TableID = tableID;
 	histData.Cell = contCell; 
@@ -611,15 +611,15 @@ void GridTableCompareView::RecordInHistory(int tableID, CellIdentifier contCell,
 }
 
 
-void GridTableCompareView::m_fillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int gr, int c)
+void GridTableCompareView::__FillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int gr, int c)
 {
-	m_fillGrid(grid, container, r, c, gr, c);
+	__FillGrid(grid, container, r, c, gr, c);
 }
 
 
-void GridTableCompareView::m_fillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int c)
+void GridTableCompareView::__FillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int c)
 {
-	m_fillGrid(grid, container, r, c, r, c);
+	__FillGrid(grid, container, r, c, r, c);
 }
 
 
@@ -630,7 +630,6 @@ CompareResult GridTableCompareView::Compare(XLTableParam param)
 	m_NextFind.Reset();
 	m_GridToContainerMap[0].Clear();
 	m_GridToContainerMap[1].Clear();
-	NotifyFileSaved();
 	//ClearHistory();
 	if(m_ContainerList[FIRST_TABLE] && m_ContainerList[SECOND_TABLE])
 	{
@@ -639,7 +638,7 @@ CompareResult GridTableCompareView::Compare(XLTableParam param)
 
 		if(m_Comparator.Compare(m_ContainerList[FIRST_TABLE], m_ContainerList[SECOND_TABLE]))
 		{
-			m_SetMaxRowColForGridCreation();
+			__SetMaxSizeForGridCreation();
 			m_ContainerList[FIRST_TABLE]->ResizeToNew(m_iMaxRow, m_iMaxCol);
 			m_ContainerList[SECOND_TABLE]->ResizeToNew(m_iMaxRow, m_iMaxCol);
 
@@ -651,26 +650,36 @@ CompareResult GridTableCompareView::Compare(XLTableParam param)
 			{
 				result = CompareResult_Success_Changes;
 			}
-			CreateComparisonDataStructure();
+			__CreateComparisonDataStructure();
 			switch(param)
 			{
+			case XLTableParamReloadTable:
+				__NotifyFileSaved();
+				CreateTable();
+				__FormatAllTables();
+				__MoveIndicators();
+				Notify(0, XLEVENT_SIDEBAR_MAKE_ALL);
+				break;
 			case XLTableParamFullTable:
 				CreateTable();
-				FormatCells();
-				MoveIndicators();
+				__FormatAllTables();
+				__MoveIndicators();
+				Notify(0, XLEVENT_SIDEBAR_MAKE_ALL);
 				break;
 			case XLTableParamDiffTable:
-				mDrawDiffTable();
-				MoveIndicators();
+				__DrawDiffTable();
+				__MoveIndicators();
+				Notify(0, XLEVENT_SIDEBAR_MAKE_NONE);
 				break;
 			case XLTableParamSameTable:
-				mDrawSameTable();
-				MoveIndicators(true);
+				__DrawSameTable();
+				__MoveIndicators(true);
+				Notify(0, XLEVENT_SIDEBAR_MAKE_NONE);
 				break;
 			default:
 				break;
 			};
-			Notify(0, GRID_ON_COMPARE_DONE);
+			//m_Comparator.Reset();
 			
 		}
 		
@@ -690,14 +699,12 @@ void GridTableCompareView::GoToRow(int row, int table)
 	}
 	m_GridList[table]->GoToCell(row, 0);
 }
-void GridTableCompareView::CreateComparisonDataStructure()
+void GridTableCompareView::__CreateComparisonDataStructure()
 {
 
-	m_iChangedCols.clear();
-	if(m_Comparator.ChangedRows().size() > 0)
-	{
-		m_iChangedCols.resize(m_Comparator.ChangedRows().size());
-	}
+	m_ChangedRowList.Clear();
+
+	m_UnchangedRowList.Clear();
 
 	for(int i = 0; i < m_Comparator.ChangedRows().size(); i++)
 	{
@@ -706,7 +713,7 @@ void GridTableCompareView::CreateComparisonDataStructure()
 		int row1 = m_Comparator.ChangedRows()[i].first;
 		int row2 = m_Comparator.ChangedRows()[i].second;
 
-		RowComparison* rc = m_iChangedCols.Insert(row1, row2);
+		RowComparison* rc = m_ChangedRowList.Insert(row1, row2);
 		if(!rc)
 		{
 			continue;
@@ -744,18 +751,67 @@ void GridTableCompareView::CreateComparisonDataStructure()
 		}
 		
 	}
+
+
+	for(int i = 0; i < m_Comparator.UnChangedRows().size(); i++)
+	{
+		int j = 0;
+		int k = 0;
+		int row1 = m_Comparator.UnChangedRows()[i].first;
+		int row2 = m_Comparator.UnChangedRows()[i].second;
+
+		RowComparison* rc = m_UnchangedRowList.Insert(row1, row2);
+
+		while( (j < m_ContainerList[0]->Col()) && (k < m_ContainerList[1]->Col()))
+		{
+			rc->Insert(j, k);
+			j++;
+			k++;
+		}
+	}
 	m_CompItr.Reset();
 	
 }
 
-void GridTableCompareView::SetRowColor(int table, int r, COLORREF ref)
+void GridTableCompareView::__SetRowColor(int table, int r, COLORREF ref)
 {
-	m_GridList[table]->SetItemBkColour(r + 1,  0, ref);
+	if((table < 0) || (table >= 2))
+	{
+		return;
+	}
+
+	if(!m_GridList[table])
+	{
+		return;
+	}
+
+	for(int i = 0; i < m_GridList[table]->GetColumnCount(); i++)
+	{
+		m_GridList[table]->SetItemBkColour(r,  i, ref);
+		m_GridList[table]->RedrawCell(r, i);
+	}
+}
+
+void GridTableCompareView::__InsertInUnchangedFromChanged(int row1, int row2)
+{
+	RowComparison* rc = m_UnchangedRowList.Insert(row1, row2);
+	if(rc)
+	{
+	}
+	int j = 0;
+	int k = 0;
+	while( (j < m_ContainerList[0]->Col()) && (k < m_ContainerList[1]->Col()))
+	{
+		rc->Insert(j, k);
+		j++;
+		k++;
+	}
+	m_ChangedRowList.Delete(row1, row2);
 }
 
 void GridTableCompareView::NextDifference()
 {
-	if(!m_GridList[FIRST_TABLE] || !m_GridList[SECOND_TABLE] || (m_Comparator.ChangedRows().size() == 0))
+	if(!m_GridList[FIRST_TABLE] || !m_GridList[SECOND_TABLE] || (m_ChangedRowList.size() == 0))
 	{
 		return;
 	}
@@ -819,7 +875,7 @@ void GridTableCompareView::NextDifference()
 		case Check_States_Feasibility:
 			if(!m_CompItr.GetValue())
 			{
-				m_CompItr.Reset();
+				m_CompItr.ResetToFront();
 				states = EndState;
 			}
 			else
@@ -908,7 +964,7 @@ void GridTableCompareView::NextDifference()
 			break;
 		case EndState:
 			FeasibilityCheck = false;
-			MoveIndicators();
+			__MoveIndicators();
 			states = MaxIndicatorStates;
 			break;
 		default:
@@ -922,7 +978,7 @@ void GridTableCompareView::NextDifference()
 
 void GridTableCompareView::PrevDifference()
 {
-	if(!m_GridList[FIRST_TABLE] || !m_GridList[SECOND_TABLE] || (m_Comparator.ChangedRows().size() == 0))
+	if(!m_GridList[FIRST_TABLE] || !m_GridList[SECOND_TABLE] || (m_ChangedRowList.size() == 0))
 	{
 		return;
 	}
@@ -986,7 +1042,7 @@ void GridTableCompareView::PrevDifference()
 		case Check_States_Feasibility:
 			if(!m_CompItr.GetValue())
 			{
-				m_CompItr.Reset(true);
+				m_CompItr.ResetToBack();
 				states = EndState;
 			}
 			else
@@ -1075,7 +1131,7 @@ void GridTableCompareView::PrevDifference()
 			break;
 		case EndState:
 			FeasibilityCheck = false;
-			MoveIndicators();
+			__MoveIndicators();
 			states = MaxIndicatorStates;
 			break;
 		default:
@@ -1085,43 +1141,43 @@ void GridTableCompareView::PrevDifference()
 	}
 }
 
-void GridTableCompareView::mShowIndicators(int Y, int TableNum)
+void GridTableCompareView::__ShowIndicators(int Y, int TableNum)
 {
 	XLObservedData data;
 	data.Data = Y;
 	data.Action = ActionShow;
 	if(TableNum == FIRST_TABLE)
 	{
-		data.EventType = GRID_POINTER_MOVE_LEFT;
+		data.EventType = XLEVENT_POINTER_LEFT_MOVE;
 	}
 	else
 	{
-		data.EventType = GRID_POINTER_MOVE_RIGHT;
+		data.EventType = XLEVENT_POINTER_RIGHT_MOVE;
 	}
 	Notify(&data, data.EventType);
 }
-void GridTableCompareView::mHideIndicators(int TableNum)
+void GridTableCompareView::__HideIndicators(int TableNum)
 {
 	XLObservedData data;
 	data.Action = ActionHide;
 	if(TableNum == FIRST_TABLE)
 	{
-		data.EventType = GRID_POINTER_MOVE_LEFT;
+		data.EventType = XLEVENT_POINTER_LEFT_MOVE;
 	}
 	else
 	{
-		data.EventType = GRID_POINTER_MOVE_RIGHT;
+		data.EventType = XLEVENT_POINTER_RIGHT_MOVE;
 	}
 	
 	Notify(&data, data.EventType);
 }
 
-void GridTableCompareView::MoveIndicators(bool ForceHide)
+void GridTableCompareView::__MoveIndicators(bool ForceHide)
 {
 	if(ForceHide)
 	{
-		mHideIndicators(FIRST_TABLE);
-		mHideIndicators(SECOND_TABLE);
+		__HideIndicators(FIRST_TABLE);
+		__HideIndicators(SECOND_TABLE);
 		return;
 	}
 
@@ -1141,11 +1197,11 @@ void GridTableCompareView::MoveIndicators(bool ForceHide)
 				RECT rect;
 				m_GridList[FIRST_TABLE]->GetCellRect(gr1.X(), 0, &rect);
 				int Y = rect.top + XLUtility::GetInstance()->GetTableY();
-				mShowIndicators(Y, FIRST_TABLE);
+				__ShowIndicators(Y, FIRST_TABLE);
 			}
 			else
 			{
-				mHideIndicators(FIRST_TABLE);
+				__HideIndicators(FIRST_TABLE);
 			}
 		}
 	}
@@ -1161,46 +1217,47 @@ void GridTableCompareView::MoveIndicators(bool ForceHide)
 				RECT rect;
 				m_GridList[SECOND_TABLE]->GetCellRect(gr2.X(), 0, &rect);
 				int Y = rect.top + XLUtility::GetInstance()->GetTableY();
-				mShowIndicators(Y, SECOND_TABLE);
+				__ShowIndicators(Y, SECOND_TABLE);
 			}
 			else
 			{
-				mHideIndicators(SECOND_TABLE);
+				__HideIndicators(SECOND_TABLE);
 			}
 		}
 	}
 }
 
-void GridTableCompareView::FormatCells()
+void GridTableCompareView::__FormatAllTables()
 {
 	for(int j = 0; j < m_GridList.size(); j++)
 	{
-		FormatATable(j);
+		__FormatATable(j);
 	}
 }
 
 
 
 
-void GridTableCompareView::FormatATable(int tableI)
+void GridTableCompareView::__FormatATable(int tableI)
 {
 	if(tableI < 0 || tableI >= 3)
 		return ;
 	if(!m_GridList[tableI] || !m_ContainerList[tableI])
 		return;
-	COLORREF sameColor = MEDAQUAMARCOL;
-	COLORREF txtSameColor = BLUECOL;
 
-	COLORREF diffColor = DARKREDCOL;
-    COLORREF tstDiffColor = BLUECOL;
+	COLORREF sameColor = SETTINGS_CLASS->GetSameCellColorInDiffRow();
+	COLORREF txtSameColor = SETTINGS_CLASS->GetSameTxtColorInDiffRow();
 
-	COLORREF EmptyColor = LIGHTGRAYCOLOR;
+	COLORREF diffColor = SETTINGS_CLASS->GetDiffCellColorInDiffRow();
+	COLORREF tstDiffColor = SETTINGS_CLASS->GetDiffTxtColorInDiffRow();
+
+	COLORREF EmptyColor = SETTINGS_CLASS->GetEmptyRowColor();
 
 	CellIdentifier gC;
 	CellIdentifier ContC;
 	int dbRow = 0;
 
-	RowComparisonIterator rowCompItr(&m_iChangedCols);
+	RowComparisonIterator rowCompItr(&m_ChangedRowList);
 	while(rowCompItr.GetValue())
 	{
 		if(tableI == 0)
@@ -1211,56 +1268,143 @@ void GridTableCompareView::FormatATable(int tableI)
 		{
 			dbRow = rowCompItr.GetValue()->Row2;
 		}
-		bool isDummy = m_ContainerList[tableI]->IsDummy(dbRow);
-		bool isEmpty = false;
-		if(!isDummy)
+		
+		if(m_ContainerList[tableI]->IsDummy(dbRow) || m_ContainerList[tableI]->IsEmpty(dbRow))
 		{
-			isEmpty = m_ContainerList[tableI]->IsEmpty(dbRow);
+			ContC.Set(dbRow, 0);
+			if(m_GridToContainerMap[tableI].FindFirst(ContC, gC))
+			{
+				__SetRowColor(tableI, gC.X(), EmptyColor);
+			}			
 		}
-		for(int k = 0; k < m_ContainerList[tableI]->Col(); k++)
-		{
-			ContC.Set(dbRow, k);
-			m_GridToContainerMap[tableI].FindFirst(ContC, gC);
-			if(tableI == FIRST_TABLE)
+		else
+		{		
+			for(int k = 0; k < m_ContainerList[tableI]->Col(); k++)
 			{
-				int c2 = 0;		
-				if(isDummy || isEmpty)
+				ContC.Set(dbRow, k);
+				if(m_GridToContainerMap[tableI].FindFirst(ContC, gC))
 				{
-					m_GridList[tableI]->SetItemBkColour(gC.X(), gC.Y(), EmptyColor);
-				}
-				else if(rowCompItr.GetValue()->FindC1(k, c2))
-				{					
-					m_GridList[tableI]->SetItemBkColour(gC.X(), gC.Y(), diffColor);
-					m_GridList[tableI]->SetItemFgColour(gC.X(), gC.Y(), tstDiffColor);
+					if(tableI == FIRST_TABLE)
+					{
+						int c2 = 0;	
+						if(rowCompItr.GetValue()->FindC1(k, c2))
+						{					
+							m_GridList[tableI]->SetItemBkColour(gC.X(), gC.Y(), diffColor);
+							m_GridList[tableI]->SetItemFgColour(gC.X(), gC.Y(), tstDiffColor);
 				   
-				}
-				else
-				{
-				   m_GridList[tableI]->SetItemBkColour(gC.X(), k, sameColor);
-				   m_GridList[tableI]->SetItemFgColour(gC.X(), k, txtSameColor);
-				}
+						}
+						else
+						{
+						   m_GridList[tableI]->SetItemBkColour(gC.X(), k, sameColor);
+						   m_GridList[tableI]->SetItemFgColour(gC.X(), k, txtSameColor);
+						}
+					}
+					else
+					{
+						int c1 = 0;
+						if(rowCompItr.GetValue()->FindC2(k, c1))
+						{
+							m_GridList[tableI]->SetItemBkColour(gC.X(), gC.Y(), diffColor);
+							m_GridList[tableI]->SetItemFgColour(gC.X(), gC.Y(), tstDiffColor);
+				   
+						}
+						else
+						{
+						   m_GridList[tableI]->SetItemBkColour(gC.X(), k, sameColor);
+						   m_GridList[tableI]->SetItemFgColour(gC.X(), k, txtSameColor);
+						}
+					}
+				}	
 			}
-			else
-			{
-				int c1 = 0;
-				if(isDummy)
-				{
-					m_GridList[tableI]->SetItemBkColour(gC.X(), gC.Y(), EmptyColor);
-				}
-				else if(rowCompItr.GetValue()->FindC2(k, c1))
-				{
-					m_GridList[tableI]->SetItemBkColour(gC.X(), gC.Y(), diffColor);
-					m_GridList[tableI]->SetItemFgColour(gC.X(), gC.Y(), tstDiffColor);
-				   
-				}
-				else
-				{
-				   m_GridList[tableI]->SetItemBkColour(gC.X(), k, sameColor);
-				   m_GridList[tableI]->SetItemFgColour(gC.X(), k, txtSameColor);
-				}
-			}	
+		}
+		if(!rowCompItr.HasNext())
+		{
+			break;
 		}
 		rowCompItr++;
+	}
+}
+
+
+void GridTableCompareView::__FormatARow(int gridrow, int tableI)
+{
+	if(tableI < 0 || tableI >= 2)
+	{
+		return;
+	}
+
+	COLORREF sameColor = SETTINGS_CLASS->GetSameCellColorInDiffRow();
+
+	COLORREF diffColor = SETTINGS_CLASS->GetDiffCellColorInDiffRow();
+	COLORREF tstDiffColor = SETTINGS_CLASS->GetDiffTxtColorInDiffRow();
+
+	RowComparison* rc = 0;
+
+	CellIdentifier cI, gI(gridrow, 0), gAdjacent;
+
+	if(m_GridToContainerMap[tableI].FindSecond(gI, cI))
+	{
+		//if this row is in changed list
+		if(tableI == FIRST_TABLE)
+		{
+			rc = m_ChangedRowList.FindRow1(cI.X());
+			__SetRowColor(0, gridrow, sameColor);
+
+			CellIdentifier cI2(rc->Row2, 0), gI2;
+
+			if(m_GridToContainerMap[1].FindFirst(cI2, gI2))
+			{
+				__SetRowColor(1, gI2.X(), sameColor);
+			}
+		}
+		else
+		{
+			rc = m_ChangedRowList.FindRow2(cI.X());
+			__SetRowColor(1, gridrow, sameColor);
+
+			CellIdentifier cI1(rc->Row1, 0), gI1;
+
+			if(m_GridToContainerMap[0].FindFirst(cI1, gI1))
+			{
+				__SetRowColor(0, gI1.X(), sameColor);
+			}
+		}
+
+		//If this row exists in the changed list, then only we need to color
+		//Else we would leave the row uncolored as per current practise.
+		if(rc)
+		{
+			ColCompareItr cItr1(rc, true);
+			ColCompareItr cItr2(rc, false);
+
+			while(!cItr1.IsEnd())
+			{
+				cI.Set(rc->Row1, cItr1.GetFValue());
+				if(m_GridToContainerMap[0].FindFirst(cI, gI))
+				{
+					m_GridList[0]->SetItemBkColour(gI.X(), gI.Y(), diffColor);
+					m_GridList[0]->SetItemFgColour(gI.X(), gI.Y(), tstDiffColor);
+					m_GridList[0]->RedrawCell(gI.X(), gI.Y());
+				}
+				cItr1++;
+			}
+			
+
+			while(!cItr2.IsEnd())
+			{
+				cI.Set(rc->Row2, cItr2.GetSValue());
+				if(m_GridToContainerMap[1].FindFirst(cI, gI))
+				{
+					m_GridList[1]->SetItemBkColour(gI.X(), gI.Y(), diffColor);
+					m_GridList[1]->SetItemFgColour(gI.X(), gI.Y(), tstDiffColor);
+					m_GridList[1]->RedrawCell(gI.X(), gI.Y());
+				}
+				cItr2++;
+			}
+
+			
+				
+		}
 	}
 }
 
@@ -1272,7 +1416,7 @@ void GridTableCompareView::ReCreateGridList()
 }
 
 
-int GridTableCompareView::NumberofDrawableTables()
+int GridTableCompareView::__TotalDrawableTables()
 {
 	int ret = 0;
 	for(int i = 0; i < m_ContainerList.size(); i++)
@@ -1314,104 +1458,113 @@ CompareResult GridTableCompareView::CreateDiffTable()
 	return Compare(XLTableParamDiffTable);
 }
 					
-void GridTableCompareView::mDrawDiffTable()
+void GridTableCompareView::__DrawDiffTable()
 {
 	int y = 0;
 	if(IsReady() && m_ContainerList[0] && m_ContainerList[1])
 	{
-		COLORREF sameColor = MEDAQUAMARCOL;
-		COLORREF txtSameColor = BLUECOL;
-
-		COLORREF diffColor = DARKREDCOL;
-	    COLORREF tstDiffColor = DARKSLATEGRAYCOL;
-
 		int row1 = 0;	
 		int row2 = 0;
-		CreateGrid(m_GridList[0], m_ContainerList[0], 0);
-		CreateGrid(m_GridList[1], m_ContainerList[1], 1);
+		__CreateGridView(m_GridList[0], m_ContainerList[0], 0);
+		__CreateGridView(m_GridList[1], m_ContainerList[1], 1);
 		EnableHistory(false);
-		RowComparisonIterator rowCompItr(&m_iChangedCols);
+		RowComparisonIterator rowCompItr(&m_ChangedRowList);
 		while(!rowCompItr.IsEnd())
 		{
 			int databaseRow1 = rowCompItr.GetValue()->Row1;
 			int databaseRow2 = rowCompItr.GetValue()->Row2;
 			y = 0;
-			for(int k = 0; k < m_ContainerList[0]->Col(); k++)
-			{
-				m_fillGrid(m_GridList[0], m_ContainerList[0], databaseRow1, k, row1, k);
-			}
-			row1++;
 
-			y = 0;
-			for(int k = 0; k < m_ContainerList[1]->Col(); k++)
+			//if(!m_ContainerList[0]->IsEmpty(databaseRow1))
 			{
-				m_fillGrid(m_GridList[1], m_ContainerList[1], databaseRow2, k, row2, k);
-				
+				for(int k = 0; k < m_ContainerList[0]->Col(); k++)
+				{
+					__FillGrid(m_GridList[0], m_ContainerList[0], databaseRow1, k, row1, k);
+				}
+				row1++;
 			}
-			row2++;
+
+			//if(!m_ContainerList[1]->IsEmpty(databaseRow2))
+			{
+				y = 0;
+				for(int k = 0; k < m_ContainerList[1]->Col(); k++)
+				{
+					__FillGrid(m_GridList[1], m_ContainerList[1], databaseRow2, k, row2, k);
+				
+				}
+				row2++;
+			}
 			rowCompItr++;
 		}
-		FormatATable(0);
-		FormatATable(1);
+		__FormatAllTables();
 		EnableHistory(true);
 	}
 }
-void GridTableCompareView::mDrawSameTable()
+void GridTableCompareView::__DrawSameTable()
 {
 	if(IsReady() && m_ContainerList[0] && m_ContainerList[1])
 	{
-		//MoveIndicators(true);
-		int numTables = NumberofDrawableTables();
+		//__MoveIndicators(true);
+		int numTables = __TotalDrawableTables();
 		XL_UTIL->VerticallyDivideArea(numTables, m_Partitions, m_iTableWidth);
 
-		int row=0;
-		CreateGrid(m_GridList[0], m_ContainerList[0], 0);
-		CreateGrid(m_GridList[1], m_ContainerList[1], 1);
+		int row = 0;
+		int row1 = 0;
+		__CreateGridView(m_GridList[0], m_ContainerList[0], 0);
+		__CreateGridView(m_GridList[1], m_ContainerList[1], 1);
 		EnableHistory(false);
-		for(int j = 0; j < m_Comparator.UnChangedRows().size(); j++)
+		RowComparisonIterator rowItr(&m_UnchangedRowList);
+		while(rowItr.Value())
 		{
-			int databaseRow1 = m_Comparator.UnChangedRows()[j].first;
-			int databaseRow2 = m_Comparator.UnChangedRows()[j].second;
+			int databaseRow1 = rowItr.Value()->Row1;
+			int databaseRow2 = rowItr.Value()->Row2;
 
 			if(databaseRow1 != INVALIDROW)
 			{
 				for(int k = 0; k < m_ContainerList[0]->Col(); k++)
 				{
-					m_fillGrid(m_GridList[0], m_ContainerList[0], databaseRow1,row, k);
+					__FillGrid(m_GridList[0], m_ContainerList[0], databaseRow1,row, k);
 					
 				}
+				row++;
 			}
 			if(databaseRow2 != INVALIDROW)
 			{			
 				for(int k = 0; k < m_ContainerList[1]->Col(); k++)
 				{
-					m_fillGrid(m_GridList[1], m_ContainerList[1], databaseRow2,row, k);	   				
+					__FillGrid(m_GridList[1], m_ContainerList[1], databaseRow2,row1, k);	   				
 				}
+				row1++;
 			}
-			row++;
+			if(!rowItr.HasNext())
+			{
+				break;
+			}
+			rowItr++;
+			
 		}
 		EnableHistory(true);
-		MoveIndicators(true);
+		__MoveIndicators(true);
 	}
 }
 
 void GridTableCompareView::Notify(XLObservedData* data, XLEventType condition)
 {
 	XLCtrlSubject::Notify(data, condition);
-	if(condition == GRID_VSCROLL)
+	if(condition == XLEVENT_GRID_VSCROLL)
 	{
-		MoveIndicators();
+		__MoveIndicators();
 	}
 }
 
-void GridTableCompareView::CreateSameTable()
+CompareResult GridTableCompareView::CreateSameTable()
 {
-    Compare(XLTableParamSameTable);
+    return Compare(XLTableParamSameTable);
 }
 	
-void GridTableCompareView::CreateAllTable()
+CompareResult GridTableCompareView::CreateAllTable()
 {  
-	Compare(XLTableParamFullTable);
+	return Compare(XLTableParamFullTable);
 }
 
 
@@ -1432,7 +1585,7 @@ void GridTableCompareView::ICopyRightToLeft()// Arrow pointing right, shifting r
 			return;
 		}
 		
-		RowComparison* rowCompCell = m_iChangedCols.FindRow2(containerCell.X());
+		RowComparison* rowCompCell = m_ChangedRowList.FindRow2(containerCell.X());
 		int y = 0;
 		int count = 0;
 		if(rowCompCell)
@@ -1447,7 +1600,7 @@ void GridTableCompareView::ICopyRightToLeft()// Arrow pointing right, shifting r
 				return;
 			}
 
-			InterChangeData(m_ContainerList[1], m_ContainerList[0], r2, c2, r1, c1);
+			__InterChangeData(m_ContainerList[1], m_ContainerList[0], r2, c2, r1, c1);
 
 			CellIdentifier FirstContainerCell(r1, c1);
 			CellIdentifier FirstGridCell;
@@ -1459,7 +1612,7 @@ void GridTableCompareView::ICopyRightToLeft()// Arrow pointing right, shifting r
 			int gr1 = FirstGridCell.X();
 			int gc1 = FirstGridCell.Y();
 
-			m_fillGrid(m_GridList[0], m_ContainerList[0], r1, c1, gr1, gc1);
+			__FillGrid(m_GridList[0], m_ContainerList[0], r1, c1, gr1, gc1);
 
 			rowCompCell->Erase(c1, c2);
 
@@ -1472,12 +1625,27 @@ void GridTableCompareView::ICopyRightToLeft()// Arrow pointing right, shifting r
 				m_GridList[1]->RedrawRow(cRow);
 			    m_GridList[0]->RedrawRow(gr1);
 
-				m_iChangedCols.Delete(r1, r2);	   
+				__InsertInUnchangedFromChanged(r1, r2); //rc becomes dangling after this	
+
+
+				//Notify sidebar about this change
+				XLObservedData xlOData;
+				xlOData.EventType = XLEVENT_SIDEBAR_MAKE_ONE;
+
+				xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T1;		
+				xlOData.Data = gr1;
+				Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
+				xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T2;
+				xlOData.Data = cRow;
+				Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
 			}
 			else
 			{
 				GridSameCol(1,cRow,cCol,0,gr1,gc1);
 			}
+			__NotifyFileChange(0);
 		}
 		
 	}
@@ -1501,7 +1669,7 @@ void GridTableCompareView::ICopyLeftToRight()// Arrow pointing left, shifting le
 			return;
 		}
 		
-		RowComparison* rowCompCell = m_iChangedCols.FindRow1(containerCell.X());
+		RowComparison* rowCompCell = m_ChangedRowList.FindRow1(containerCell.X());
 		int y = 0;
 		int count = 0;
 		if(rowCompCell)
@@ -1516,7 +1684,7 @@ void GridTableCompareView::ICopyLeftToRight()// Arrow pointing left, shifting le
 				return;
 			}
 
-			InterChangeData(m_ContainerList[0], m_ContainerList[1], r1, c1, r2, c2);
+			__InterChangeData(m_ContainerList[0], m_ContainerList[1], r1, c1, r2, c2);
 
 			CellIdentifier SecondContainerCell(r2, c2);
 			CellIdentifier SecondGridCell;
@@ -1529,7 +1697,7 @@ void GridTableCompareView::ICopyLeftToRight()// Arrow pointing left, shifting le
 			int gr2 = SecondGridCell.X();
 			int gc2 = SecondGridCell.Y();
 
-			m_fillGrid(m_GridList[1], m_ContainerList[1], r2, c2, gr2, gc2);
+			__FillGrid(m_GridList[1], m_ContainerList[1], r2, c2, gr2, gc2);
 
 			rowCompCell->Erase(c1, c2);
 
@@ -1542,12 +1710,25 @@ void GridTableCompareView::ICopyLeftToRight()// Arrow pointing left, shifting le
 				m_GridList[1]->RedrawRow(cRow);
 			    m_GridList[0]->RedrawRow(gr2);
 
-				m_iChangedCols.Delete(r1, r2);	   
+				__InsertInUnchangedFromChanged(r1, r2); //rc becomes dangling after this	   
+
+				//Notify sidebar about this change
+				XLObservedData xlOData;
+				xlOData.EventType = XLEVENT_SIDEBAR_MAKE_ONE;
+
+				xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T1;		
+				xlOData.Data = cRow;
+				Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
+				xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T2;
+				xlOData.Data = gr2;
+				Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
 			}
 			else
 			{
 				GridSameCol(0,cRow,cCol,1,gr2,gc2);
 			}
+			__NotifyFileChange(1);
 		}
 		
 	}
@@ -1578,6 +1759,14 @@ void GridTableCompareView::OnCopyFromLeftToRight(int r1, int r2, int c1, int c2)
 	}
 }
 
+
+void GridTableCompareView::OnMoveFromRightToLeft(int r1, int r2, int c1, int c2)
+{
+}
+void GridTableCompareView::OnMoveFromLeftToRight(int r1, int r2, int c1, int c2)
+{
+}
+
 void GridTableCompareView::LineCopyLeftToRight() //left arrow
 {
 	if(m_CompItr.IsEnd())
@@ -1593,6 +1782,9 @@ void GridTableCompareView::LineCopyLeftToRight() //left arrow
 		int r1 = m_CompItr.GetValue()->Row1;
 		int r2 = m_CompItr.GetValue()->Row2;
 
+		XLCDRow* secRow = m_ContainerList[1]->CellRow(r2);
+		secRow->SetDummy(false);
+
 		CellIdentifier containerCell1, containerCell2;
 		CellIdentifier gridCell2(r2, 0);
 
@@ -1603,11 +1795,11 @@ void GridTableCompareView::LineCopyLeftToRight() //left arrow
 			int c2 = 0;
 			if(rc->FindC1(c1, c2))
 			{
-				InterChangeData(m_ContainerList[0], m_ContainerList[1], r1, c1, r2, c2);
+				__InterChangeData(m_ContainerList[0], m_ContainerList[1], r1, c1, r2, c2);
 				containerCell2.Set(r2, c2);
 				if(m_GridToContainerMap[1].FindFirst(containerCell2, gridCell2))
 				{
-					m_fillGrid(m_GridList[1], m_ContainerList[1], r2, c2, gridCell2.X(), gridCell2.Y());
+					__FillGrid(m_GridList[1], m_ContainerList[1], r2, c2, gridCell2.X(), gridCell2.Y());
 				}
 			}
 			
@@ -1634,7 +1826,23 @@ void GridTableCompareView::LineCopyLeftToRight() //left arrow
 			}
 			GridSameCol(1,gridCell2.X(),gridCell2.Y(),0,-1,-1);
 		}
-		m_CompItr.DeleteCurrValue();
+
+		__NotifyFileChange(1);
+
+		//Notify sidebar about this change
+		XLObservedData xlOData;
+		xlOData.EventType = XLEVENT_SIDEBAR_MAKE_ONE;
+
+		xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T1;		
+		xlOData.Data = gridCell1.X();
+		Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
+		xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T2;
+		xlOData.Data = gridCell2.X();
+		Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
+		__InsertInUnchangedFromChanged(r1, r2); //rc becomes dangling after this	
+		//m_CompItr.DeleteCurrValue();
 	}
 
 	
@@ -1656,10 +1864,11 @@ void GridTableCompareView::LineCopyRightToLeft() //Right arrow	    from right to
 		int r1 = rc->Row1;
 		int r2 = rc->Row2;
 
+		XLCDRow* secRow = m_ContainerList[0]->CellRow(r1);
+		secRow->SetDummy(false);
+
 		CellIdentifier containerCell1, containerCell2;
 		CellIdentifier gridCell1(r1, 0);
-		
-
 
 		ColCompareItr citr(rc, false);
 		while(!citr.IsEnd())
@@ -1668,11 +1877,11 @@ void GridTableCompareView::LineCopyRightToLeft() //Right arrow	    from right to
 			int c2 = citr.GetSValue();
 			if(rc->FindC2(c2, c1))
 			{
-				InterChangeData(m_ContainerList[1], m_ContainerList[0], r2, c2, r1, c1);
+				__InterChangeData(m_ContainerList[1], m_ContainerList[0], r2, c2, r1, c1);
 				containerCell1.Set(r1, c1);
 				if(m_GridToContainerMap[0].FindFirst(containerCell1, gridCell1))
 				{
-					m_fillGrid(m_GridList[0], m_ContainerList[0], r1, c1, gridCell1.X(), gridCell1.Y());
+					__FillGrid(m_GridList[0], m_ContainerList[0], r1, c1, gridCell1.X(), gridCell1.Y());
 				}
 			}
 			
@@ -1698,7 +1907,23 @@ void GridTableCompareView::LineCopyRightToLeft() //Right arrow	    from right to
 			}
 			GridSameCol(1,gridCell2.X(),gridCell2.Y(),1,-1,-1);
 		}
-		m_CompItr.DeleteCurrValue();
+
+		__NotifyFileChange(0);
+
+		//Notify sidebar about this change
+		XLObservedData xlOData;
+		xlOData.EventType = XLEVENT_SIDEBAR_MAKE_ONE;
+
+		xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T1;		
+		xlOData.Data = gridCell1.X();
+		Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
+		xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T2;
+		xlOData.Data = gridCell2.X();
+		Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
+		__InsertInUnchangedFromChanged(r1, r2); //rc becomes dangling after this	
+		//m_CompItr.DeleteCurrValue();
 	}
 }
 
@@ -1706,8 +1931,8 @@ void GridTableCompareView::LineCopyRightToLeft() //Right arrow	    from right to
 void GridTableCompareView::SelectionCopyLeftToRight(int r1, int r2, int c1, int c2)
 {
 	CellIdentifier gr1, gr2, con1, con2;
-	COLORREF Whitecol = WHITECOL;
-    COLORREF Blackcol = BLACKCOL;
+	COLORREF Whitecol = SETTINGS_CLASS->GetXferredBGColor();
+	COLORREF Blackcol = SETTINGS_CLASS->GetXferredTxtColor();
 
 	for(int i = r1; i <= r2; i++)
 	{
@@ -1716,7 +1941,7 @@ void GridTableCompareView::SelectionCopyLeftToRight(int r1, int r2, int c1, int 
 		{
 			continue;
 		}
-		RowComparison* rc =  m_iChangedCols.FindRow1(con1.X());
+		RowComparison* rc =  m_ChangedRowList.FindRow1(con1.X());
 		if(rc)
 		{
 			for(int j = c1; j <= c2; j++)
@@ -1729,11 +1954,11 @@ void GridTableCompareView::SelectionCopyLeftToRight(int r1, int r2, int c1, int 
 				int cc2 = 0;
 				if(rc->FindC2(con1.Y(), cc2))
 				{
-					InterChangeData(m_ContainerList[0], m_ContainerList[1],	con1.X(), con1.Y(), rc->Row2, cc2);
+					__InterChangeData(m_ContainerList[0], m_ContainerList[1],	con1.X(), con1.Y(), rc->Row2, cc2);
 					con2.Set(rc->Row2, cc2);
 					if(m_GridToContainerMap[1].FindFirst(con2, gr2))
 					{
-						m_fillGrid(m_GridList[1], m_ContainerList[1],  con2.X(), con2.Y(), gr2.X(), gr2.Y());
+						__FillGrid(m_GridList[1], m_ContainerList[1],  con2.X(), con2.Y(), gr2.X(), gr2.Y());
 						rc->Erase(con1.Y(), cc2);
 						if(rc->SizeCol() == 0)
 						{
@@ -1744,7 +1969,19 @@ void GridTableCompareView::SelectionCopyLeftToRight(int r1, int r2, int c1, int 
 							m_GridList[1]->RedrawRow(gr2.X());
 							m_GridList[0]->RedrawRow(gr1.X());
 
-							m_iChangedCols.Delete(r1, r2);	
+							__InsertInUnchangedFromChanged(rc->Row1, rc->Row2); //rc becomes dangling after this	
+
+							//Notify sidebar about this change
+							XLObservedData xlOData;
+							xlOData.EventType = XLEVENT_SIDEBAR_MAKE_ONE;
+
+							xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T1;		
+							xlOData.Data = gr1.X();
+							Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
+							xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T2;
+							xlOData.Data = gr2.X();
+							Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
 						}
 						else
 						{
@@ -1756,12 +1993,13 @@ void GridTableCompareView::SelectionCopyLeftToRight(int r1, int r2, int c1, int 
 			}
 		}
 	}
+	__NotifyFileChange(1);
 }
 void GridTableCompareView::SelectionCopyRightToLeft(int r1, int r2, int c1, int c2)
 {
 	CellIdentifier gr1, gr2, con1, con2;
-	COLORREF Whitecol = WHITECOL;
-    COLORREF Blackcol = BLACKCOL;
+	COLORREF Whitecol = SETTINGS_CLASS->GetXferredBGColor();
+	COLORREF Blackcol = SETTINGS_CLASS->GetXferredTxtColor();
 
 	for(int i = r1; i <= r2; i++)
 	{
@@ -1770,7 +2008,7 @@ void GridTableCompareView::SelectionCopyRightToLeft(int r1, int r2, int c1, int 
 		{
 			continue;
 		}
-		RowComparison* rc =  m_iChangedCols.FindRow2(con2.X());
+		RowComparison* rc =  m_ChangedRowList.FindRow2(con2.X());
 		if(rc)
 		{
 			for(int j = c1; j <= c2; j++)
@@ -1783,11 +2021,11 @@ void GridTableCompareView::SelectionCopyRightToLeft(int r1, int r2, int c1, int 
 				int cc1 = 0;
 				if(rc->FindC1(con2.Y(), cc1))
 				{
-					InterChangeData(m_ContainerList[1], m_ContainerList[0],	con2.X(), con2.Y(), rc->Row1, cc1);
+					__InterChangeData(m_ContainerList[1], m_ContainerList[0],	con2.X(), con2.Y(), rc->Row1, cc1);
 					con1.Set(rc->Row1, cc1);
 					if(m_GridToContainerMap[0].FindFirst(con1, gr1))
 					{
-						m_fillGrid(m_GridList[0], m_ContainerList[0],  con1.X(), con1.Y(), gr1.X(), gr1.Y());						
+						__FillGrid(m_GridList[0], m_ContainerList[0],  con1.X(), con1.Y(), gr1.X(), gr1.Y());						
 						rc->Erase(cc1, con2.Y());
 						if(rc->SizeCol() == 0)
 						{
@@ -1798,7 +2036,19 @@ void GridTableCompareView::SelectionCopyRightToLeft(int r1, int r2, int c1, int 
 							m_GridList[1]->RedrawRow(gr2.X());
 							m_GridList[0]->RedrawRow(gr1.X());
 
-							m_iChangedCols.Delete(r1, r2);	
+							__InsertInUnchangedFromChanged(rc->Row1, rc->Row2); //rc becomes dangling after this	
+
+							//Notify sidebar about this change
+							XLObservedData xlOData;
+							xlOData.EventType = XLEVENT_SIDEBAR_MAKE_ONE;
+
+							xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T1;		
+							xlOData.Data = gr1.X();
+							Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
+							xlOData.Action = XL_SIDEBAR_ACTION_DELETE_LINE_T2;
+							xlOData.Data = gr2.X();
+							Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
 						}
 						else
 						{
@@ -1810,9 +2060,10 @@ void GridTableCompareView::SelectionCopyRightToLeft(int r1, int r2, int c1, int 
 			}
 		}
 	}
+	__NotifyFileChange(0);
 }
 
-void GridTableCompareView::InterChangeData(XLCellDataContainer* from, XLCellDataContainer* to, int r1, int c1, int r2, int c2)
+void GridTableCompareView::__InterChangeData(XLCellDataContainer* from, XLCellDataContainer* to, int r1, int c1, int r2, int c2)
 {
 	int tableId = 0;
 	if(to == m_ContainerList[0])
@@ -1828,14 +2079,14 @@ void GridTableCompareView::InterChangeData(XLCellDataContainer* from, XLCellData
 		XLCellData* dataFrom = from->CellData(r1, c1);
 		XLCellData* dataTo = to->CellData(r2, c2);
 
-		RecordInHistory(tableId, CellIdentifier(r2, c2), dataTo);
+		__RecordThisInHistory(tableId, CellIdentifier(r2, c2), dataTo);
 
 		if(dataFrom && dataTo)
 		{
 			*dataTo = *dataFrom;
 		}
 	}
-	NotifyFileChange(tableId);
+	__NotifyFileChange(tableId);
 	
 }
 
@@ -1852,7 +2103,7 @@ bool GridTableCompareView::SaveFileA()
 	CExcelDataExtraction e;
     if(e.SaveToExcelFormat(m_ContainerList[0],m_pathOne))
 	{
-		NotifyFileSaved();
+		__NotifyFileSaved();
 		return true;
 	}
 	return false;
@@ -1862,7 +2113,7 @@ bool GridTableCompareView::SaveFileB()
 	CExcelDataExtraction e;
 	if(e.SaveToExcelFormat(m_ContainerList[1],m_pathTwo))
 	{
-		NotifyFileSaved();
+		__NotifyFileSaved();
 		return true;
 	}
 	return false;
@@ -1891,7 +2142,7 @@ void GridTableCompareView::GridSameCol(int first, int r1, int col1, int second, 
 void GridTableCompareView::UndoChanges()
 {
 	EnableHistory(false);
-	HistDataPair* hP = RemoveRecentHistory();
+	XLHistoryData::HistoryDataSPtr hP = RemoveRecentHistory();
 	if(!hP)
 	{
 		EnableHistory(true);
@@ -1905,20 +2156,20 @@ void GridTableCompareView::UndoChanges()
 		XLCellDataContainer* container = m_ContainerList[hP->TableID];
 		if(container)
 		{
-			XLCellData* cellData = container->CellData(hP->Cell);
-			if(cellData)
+			if(m_GridToContainerMap[hP->TableID].FindFirst(hP->Cell, gridCell))
 			{
-				*cellData = hP->Data;
+				__SaveDataFromHistory(gridCell.X(), gridCell.Y(),hP->TableID, &hP->Data);
 			}
+			grid->RedrawRow(gridCell.X());
 		}
-		if(m_GridToContainerMap[hP->TableID].FindFirst(hP->Cell, gridCell))
-		{
-			m_fillGrid(grid, container, hP->Cell.X(), hP->Cell.Y(), gridCell.X(), gridCell.Y());
-		}
-		grid->RedrawRow(gridCell.X());
+		
 		//grid->GoToRow(gridCell.X());
 	}
-	Compare(m_CurrentState);
+	if(RemainingHistory() == 0)
+	{
+		__NotifyFileSaved();
+	}
+	//Compare(m_CurrentState);
 	EnableHistory(true);
 }
 
@@ -1927,9 +2178,17 @@ void GridTableCompareView::SaveToDatabase(int r, int c, CString& value)
 	//GridViewHelper::GetInstance()->SetGridView(this);
 	//GridViewHelper::GetInstance()->SetDBParam(new SaveDBParam(r, c, value));
 	//GridViewHelper::GetInstance()->RunProgramAsync(AsyncProgramType_SaveToDB);
-	mSaveToDataBase(r,c, value);
+	if(GetCurrentObserver() == m_GridList[0])
+	{
+		__SaveDataFromGridToContainer(r,c, FIRST_TABLE, value);
+	}
+	else if(GetCurrentObserver() == m_GridList[1])
+	{
+		__SaveDataFromGridToContainer(r,c, SECOND_TABLE, value);
+	}
 }
 
+#if 0
 void GridTableCompareView::SaveToTable(int r, int c, CString& value, int table)
 {
 	CCellID topLeft;
@@ -1941,7 +2200,7 @@ void GridTableCompareView::SaveToTable(int r, int c, CString& value, int table)
 			XLCellData* cellData = m_ContainerList[0]->CellData(cell.X(), cell.Y());
 			if(cellData)
 			{
-				RecordInHistory(0, cell, cellData);
+				__RecordThisInHistory(0, cell, cellData);
 				cellData->SetDataAndIndentifyType(value);
 			}
 			topLeft = m_GridList[0]->GetVisibleTopLeftCell();
@@ -1954,7 +2213,7 @@ void GridTableCompareView::SaveToTable(int r, int c, CString& value, int table)
 			XLCellData* cellData = m_ContainerList[1]->CellData(cell.X(), cell.Y());
 			if(cellData)
 			{
-				RecordInHistory(1, cell, cellData);
+				__RecordThisInHistory(1, cell, cellData);
 				cellData->SetDataAndIndentifyType(value);
 			}
 			topLeft = m_GridList[1]->GetVisibleTopLeftCell();
@@ -1962,16 +2221,17 @@ void GridTableCompareView::SaveToTable(int r, int c, CString& value, int table)
 	}
 	Compare(m_CurrentState);
 	m_GridList[table]->GoToCell(r, c);
-	NotifyFileChange(table);
+	__NotifyFileChange(table);
 }
+#endif
 
 
-void GridTableCompareView::mSaveToDataBase(int r, int c, CString& value)
+void GridTableCompareView::__SaveDataFromGridToContainer(int r, int c, int table, CString& value)
 {
-	int table = 0;
 	CCellID topLeft;
 	CellIdentifier grid(r, c), cell;
-	if(GetCurrentObserver() == m_GridList[0])
+	int R1 = -1, R2 = -1;
+	if(table == FIRST_TABLE)
 	{
 		if(m_GridToContainerMap[0].FindSecond(grid, cell))
 		{
@@ -1983,14 +2243,39 @@ void GridTableCompareView::mSaveToDataBase(int r, int c, CString& value)
 					return;
 				}
 				XLCellData* cellData = &(*cellRow)[cell.Y()];
-				RecordInHistory(0, cell, cellData);
+				__RecordThisInHistory(0, cell, cellData);
 				cellData->SetDataAndIndentifyType(value);
+				RowComparison* rc = m_ChangedRowList.FindRow1(cell.X());
+				R1 = r;
+				if(rc)
+				{
+					rc->Insert(cell.Y(), cell.Y());
+				}
+				else
+				{
+					rc = m_UnchangedRowList.FindRow1(cell.X());
+					if(rc)
+					{
+						RowComparison* uRc = m_ChangedRowList.Insert(rc->Row1, rc->Row2);
+						int C2 = 0;
+						if(!rc->FindC2(cell.Y(), C2))
+						{
+							return;
+						}
+						uRc->Insert(cell.Y(), C2);
+						m_UnchangedRowList.Delete(rc->Row1, rc->Row2);
+						CellIdentifier gnext;
+						if(m_GridToContainerMap[1].FindSecond(cell, gnext))
+						{
+							R2 = gnext.X();
+						}
+					}
+				}
 			}
 			topLeft = m_GridList[0]->GetVisibleTopLeftCell();
 		}
-		table = 0;
 	}
-	if(GetCurrentObserver() == m_GridList[1])
+	if(table == SECOND_TABLE)
 	{
 		if(m_GridToContainerMap[1].FindSecond(grid, cell))
 		{
@@ -2002,42 +2287,228 @@ void GridTableCompareView::mSaveToDataBase(int r, int c, CString& value)
 					return;
 				}
 				XLCellData* cellData = &(*cellRow)[cell.Y()];
-				RecordInHistory(1, cell, cellData);
+				__RecordThisInHistory(1, cell, cellData);
 				cellData->SetDataAndIndentifyType(value);
+				RowComparison* rc = m_ChangedRowList.FindRow2(cell.X());
+				R2 = r;
+				if(rc)
+				{
+					rc->Insert(cell.Y(), cell.Y());
+				}
+				else
+				{
+					rc = m_UnchangedRowList.FindRow2(cell.X());
+					if(rc)
+					{
+						RowComparison* uRc = m_ChangedRowList.Insert(rc->Row1, rc->Row2);
+						int C1 = 0;
+						if(!rc->FindC1(cell.Y(), C1))
+						{
+							return;
+						}
+						uRc->Insert(C1, cell.Y());
+						m_UnchangedRowList.Delete(rc->Row1, rc->Row2);
+
+						CellIdentifier gnext;
+						if(m_GridToContainerMap[0].FindSecond(cell, gnext))
+						{
+							R1 = gnext.X();
+						}
+					}
+				}
 			}
 			topLeft = m_GridList[1]->GetVisibleTopLeftCell();
-		}
-		table = 1; 		
+		}	
 	}
-	Compare(m_CurrentState);
+	__FormatARow(r, table);
+	//Compare(m_CurrentState);
 	m_GridList[table]->GoToCell(r, c);
-	NotifyFileChange(table);
+	__NotifyFileChange(table);
+	
+	//Notify sidebar about this change	
+	if((R1 != -1) && (R2 != -1))
+	{
+		XLObservedData xlOData;
+		xlOData.EventType = XLEVENT_SIDEBAR_MAKE_ONE;
+
+		xlOData.Action = XL_SIDEBAR_ACTION_ADD_LINE_T1;		
+		xlOData.Data = R1;
+		Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
+		xlOData.Action = XL_SIDEBAR_ACTION_ADD_LINE_T2;
+		xlOData.Data = R2;
+		Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+	}
 }
 
 
-void GridTableCompareView::NotifyFileChange(int tbl)
+void GridTableCompareView::__NotifySidebar(XLEventType eventType, int row1, int row2)
+{
+	if((row1 >= 0) && (row2 > 0))
+	{
+		XLObservedData xlOData;
+		xlOData.EventType = eventType;
+
+		if(eventType == XLEVENT_SIDEBAR_MAKE_ONE)
+		{
+			xlOData.Action = XL_SIDEBAR_ACTION_ADD_LINE_T1;	
+		}
+		xlOData.Data = row1;
+		Notify(&xlOData, eventType);
+
+		if(eventType == XLEVENT_SIDEBAR_MAKE_ONE)
+		{
+			xlOData.Action = XL_SIDEBAR_ACTION_ADD_LINE_T2;	
+		}
+		xlOData.Data = row2;
+		Notify(&xlOData, eventType);
+	}
+}
+
+
+void GridTableCompareView::__SaveDataFromHistory(int r, int c, int table, XLCellData* value)
+{
+	if(!value)
+	{
+		return;
+	}
+
+	CCellID topLeft;
+	CellIdentifier grid(r, c), cell;
+	int R1 = -1, R2 = -1;
+	if(table == FIRST_TABLE)
+	{
+		if(m_GridToContainerMap[0].FindSecond(grid, cell))
+		{
+			XLCDRow* cellRow = m_ContainerList[0]->CellRow(cell.X());
+			if(cellRow)
+			{
+				if(cellRow->IsDummy())
+				{
+					return;
+				}
+				XLCellData* cellData = &(*cellRow)[cell.Y()];
+				*cellData = *value;
+				__FillGrid(m_GridList[FIRST_TABLE], m_ContainerList[FIRST_TABLE],cell.X(), cell.Y(), grid.X(), grid.Y());
+				RowComparison* rc = m_ChangedRowList.FindRow1(cell.X());
+				R1 = r;
+				if(rc)
+				{
+					rc->Insert(cell.Y(), cell.Y());
+				}
+				else
+				{
+					rc = m_UnchangedRowList.FindRow1(cell.X());
+					if(rc)
+					{
+						RowComparison* uRc = m_ChangedRowList.Insert(rc->Row1, rc->Row2);
+						int C2 = 0;
+						if(!rc->FindC2(cell.Y(), C2))
+						{
+							return;
+						}
+						uRc->Insert(cell.Y(), C2);
+						m_UnchangedRowList.Delete(rc->Row1, rc->Row2);
+						CellIdentifier gnext;
+						if(m_GridToContainerMap[1].FindSecond(cell, gnext))
+						{
+							R2 = gnext.X();
+						}
+					}
+				}
+			}
+			topLeft = m_GridList[0]->GetVisibleTopLeftCell();
+		}
+	}
+	else if(table == SECOND_TABLE)
+	{
+		if(m_GridToContainerMap[1].FindSecond(grid, cell))
+		{
+			XLCDRow* cellRow = m_ContainerList[1]->CellRow(cell.X());
+			if(cellRow)
+			{
+				if(cellRow->IsDummy())
+				{
+					return;
+				}
+				XLCellData* cellData = &(*cellRow)[cell.Y()];
+				*cellData = *value;
+				__FillGrid(m_GridList[SECOND_TABLE], m_ContainerList[SECOND_TABLE],cell.X(), cell.Y(), grid.X(), grid.Y());
+				RowComparison* rc = m_ChangedRowList.FindRow2(cell.X());
+				R2 = r;
+				if(rc)
+				{
+					rc->Insert(cell.Y(), cell.Y());
+				}
+				else
+				{
+					rc = m_UnchangedRowList.FindRow2(cell.X());
+					if(rc)
+					{
+						RowComparison* uRc = m_ChangedRowList.Insert(rc->Row1, rc->Row2);
+						int C1 = 0;
+						if(!rc->FindC1(cell.Y(), C1))
+						{
+							return;
+						}
+						uRc->Insert(C1, cell.Y());
+						m_UnchangedRowList.Delete(rc->Row1, rc->Row2);
+
+						CellIdentifier gnext;
+						if(m_GridToContainerMap[0].FindSecond(cell, gnext))
+						{
+							R1 = gnext.X();
+						}
+					}
+				}
+			}
+			topLeft = m_GridList[1]->GetVisibleTopLeftCell();
+		}		
+	}
+	__FormatARow(r, table);
+	//Compare(m_CurrentState);
+	m_GridList[table]->GoToCell(r, c);
+	__NotifyFileChange(table);
+	
+	//Notify sidebar about this change	
+	if((R1 != -1) && (R2 != -1))
+	{
+		XLObservedData xlOData;
+		xlOData.EventType = XLEVENT_SIDEBAR_MAKE_ONE;
+
+		xlOData.Action = XL_SIDEBAR_ACTION_ADD_LINE_T1;		
+		xlOData.Data = R1;
+		Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+
+		xlOData.Action = XL_SIDEBAR_ACTION_ADD_LINE_T2;
+		xlOData.Data = R2;
+		Notify(&xlOData, XLEVENT_SIDEBAR_MAKE_ONE);
+	}
+}
+
+void GridTableCompareView::__NotifyFileChange(int tbl)
 {
 	if(tbl < 0 || tbl >= 2)
 		return;
 	XLObservedData data;
 	if(tbl == 0)
 	{
-		data.Data = GRID_LEFT_FILE_CHANGED;
-		Notify(&data, GRID_LEFT_FILE_CHANGED);
+		data.Data = XLEVENT_LEFT_FILE_CHANGED;
+		Notify(&data, XLEVENT_LEFT_FILE_CHANGED);
 	}
 	else
 	{
-		data.Data = GRID_RIGHT_FILE_CHANGED;
-		Notify(&data, GRID_RIGHT_FILE_CHANGED);
+		data.Data = XLEVENT_RIGHT_FILE_CHANGED;
+		Notify(&data, XLEVENT_RIGHT_FILE_CHANGED);
 	}
 	
 }
 
-void GridTableCompareView::NotifyFileSaved()
+void GridTableCompareView::__NotifyFileSaved()
 {
 	XLObservedData data;
-	data.Data = GRID_FILE_SAVED;
-	Notify(&data, GRID_FILE_SAVED);
+	data.Data = XLEVENT_FILE_SAVED;
+	Notify(&data, XLEVENT_FILE_SAVED);
 }
 
 
