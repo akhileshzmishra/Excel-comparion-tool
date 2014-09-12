@@ -6,10 +6,12 @@
 #include "SideBar.h"
 #include "CommonHeader.h"
 #include "GridTableCompareView.h"
+#include "Settings.h"
+
 #define SIDEBAR_CLASS_NAME L"XLSIDE_BAR"
 
 // CSideBar
-static const XLEventType RegisterConditions[] = {GRID_ON_COMPARE_DONE };
+static const XLEventType RegisterConditions[] = {XLEVENT_SIDEBAR_MAKE_ALL, XLEVENT_SIDEBAR_MAKE_ONE, XLEVENT_SIDEBAR_MAKE_NONE };
 
 
 IMPLEMENT_DYNAMIC(CSideBar, CWnd)
@@ -132,16 +134,17 @@ void CSideBar::OnLButtonUp(UINT nFlags, CPoint point)
 }
 void CSideBar::OnDraw(CDC* pDC)
 {
+	__DrawBGRect(pDC);
 	ItemPositionItr itrs1(&mPosMap[0], true);
 	while(!itrs1.IsEnd())
 	{
-		DrawStrip(pDC, itrs1.GetFValue(), 0);
+		__DrawStrip(pDC, itrs1.GetFValue(), 0);
 		itrs1++;
 	}
 	ItemPositionItr itrs2(&mPosMap[1], true);
 	while(!itrs2.IsEnd())
 	{
-		DrawStrip(pDC, itrs2.GetFValue(), 1);
+		__DrawStrip(pDC, itrs2.GetFValue(), 1);
 		itrs2++;
 	}
 }
@@ -157,29 +160,73 @@ void CSideBar::Notify(XLObservedData* data, XLEventType* type)
 	GridTableCompareView* gView = GridTableCompareView::GetInstance();
 	if(gView)
 	{
-		mPosMap[0].Clear();
-		mPosMap[1].Clear();
-		RETURNTYPE rt = gView->ChangedRowNumber();
-
-		int row = gView->GetMaxRow() + 1;
-
-		double multiplier = (double)mH/(double)row;
-
-		for(int i = 0; i < rt.size(); i++)
+		if(*type == XLEVENT_SIDEBAR_MAKE_ALL)
 		{
-			int Y = (int)(multiplier*rt[i].first);
-			mPosMap[0].Insert(rt[i].first, Y);
+			mPosMap[0].Clear();
+			mPosMap[1].Clear();
+			RowComparisonList& rt = gView->ChangedRowNumber();
 
-			Y = (int)(multiplier*rt[i].second);
-			mPosMap[1].Insert(rt[i].second, Y);
+			int row = gView->GetMaxRow() + 1;
+
+			double multiplier = (double)mH/(double)row;
+
+			RowComparisonIterator itr(&rt);
+			while(itr.Value())
+			{
+				int Y = (int)(multiplier*itr.Value()->Row1);
+				mPosMap[0].Insert(itr.Value()->Row1, Y);
+
+				Y = (int)(multiplier*itr.Value()->Row2);
+				mPosMap[1].Insert(itr.Value()->Row2, Y);
+
+				if(itr.HasNext())
+				{
+					itr++;
+				}
+				else
+				{
+					break;
+				}
+			}
+			Invalidate();
 		}
-		Invalidate();
+		else if(*type == XLEVENT_SIDEBAR_MAKE_ONE)
+		{
+			int row = gView->GetMaxRow() + 1;
+			double multiplier = (double)mH/(double)row;
+
+			if(data->Action == XL_SIDEBAR_ACTION_DELETE_LINE_T1)
+			{
+				mPosMap[0].DeleteAsPerFirst(data->Data);
+			}
+			else if(data->Action == XL_SIDEBAR_ACTION_DELETE_LINE_T2)
+			{
+				mPosMap[1].DeleteAsPerFirst(data->Data);
+			}
+			else if(data->Action == XL_SIDEBAR_ACTION_ADD_LINE_T1)
+			{
+				int Y = (int)(multiplier*data->Data);
+				mPosMap[0].Insert(data->Data, Y);
+			}
+			else if(data->Action == XL_SIDEBAR_ACTION_ADD_LINE_T2)
+			{
+				int Y = (int)(multiplier*data->Data);
+				mPosMap[1].Insert(data->Data, Y);
+			}
+			Invalidate();
+		}
+		else
+		{
+			mPosMap[0].Clear();
+			mPosMap[1].Clear();
+			Invalidate();
+		}
 
 	}
 }
 
 
-void CSideBar::DrawStrip(CDC* pDC, int top, int portion)
+void CSideBar::__DrawStrip(CDC* pDC, int top, int portion)
 {
 	RECT rect;
 	rect.top = top;
@@ -206,5 +253,18 @@ void CSideBar::DrawStrip(CDC* pDC, int top, int portion)
 
    // TODO: add draw code for native data here	  
 	
+}
+
+void CSideBar::__DrawBGRect(CDC* pDC)
+{
+	RECT rect;
+	rect.top = 0;
+    rect.bottom = mH;
+	rect.left = 0;
+	rect.right = mW;
+	COLORREF ref = SETTINGS_CLASS->GetSideBarBGColor();
+	CBrush brush(ref);
+
+	pDC->FillRect(&rect, &brush);
 }
 
