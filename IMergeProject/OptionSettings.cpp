@@ -35,6 +35,7 @@ BEGIN_MESSAGE_MAP(COptionSettings, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBO_OP_TYPE, &COptionSettings::OnCbnSelchangeComboOpType)
 	ON_EN_CHANGE(IDC_MATCH_RATIO, &COptionSettings::OnEnChangeMatchRatio)
 	ON_BN_CLICKED(IDC_CHECK_AUTO_COMPARE, &COptionSettings::OnBnClickedCheckAutoCompare)
+	ON_EN_CHANGE(IDC_MAX_HISTORY, &COptionSettings::OnEnChangeMaxHistory)
 END_MESSAGE_MAP()
 
 
@@ -80,6 +81,8 @@ void COptionSettings::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 	EnableMatchPercentageBox();
 
 	GetAutoCompare();
+
+	GetMaxHistory();
 	
 }
 
@@ -242,5 +245,34 @@ void COptionSettings::OnBnClickedCheckAutoCompare()
 		{
 			SETTINGS_CLASS->SetAutoCompare(false);
 		}
+	}
+}
+
+void COptionSettings::OnEnChangeMaxHistory()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialog::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	CEdit* matchBox = (CEdit*)GetDlgItem(IDC_MAX_HISTORY);
+	if(matchBox)
+	{
+		CString thestring;
+		matchBox->GetWindowTextW(thestring);
+		int d = _tstoi(thestring);
+		SETTINGS_CLASS->SetMaxHistorySize(d);
+	}
+}
+
+void COptionSettings::GetMaxHistory()
+{
+	CEdit* matchBox = (CEdit*)GetDlgItem(IDC_MAX_HISTORY);
+	if(matchBox)
+	{
+		CString thestring;
+		thestring.Format(L"%d", SETTINGS_CLASS->GetMaxHistorySize());
+		matchBox->SetWindowTextW(thestring);
 	}
 }

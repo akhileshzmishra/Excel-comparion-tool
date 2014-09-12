@@ -29,7 +29,6 @@
 #define IDB_BITMAP_TOOLTIPBTN_LOAD      155
 #define IDD_OPTION_DLG                  156
 #define IDD_DIALOG4                     158
-#define IDB_BITMAP2                     159
 #define IDB_BITMAP_FILE_BTN_NEW         159
 #define IDC_EDITBOX_EBR                 1000
 #define IDC_EDIT1                       1001
@@ -56,6 +55,9 @@
 #define IDC_MATCH_RATIO                 1024
 #define IDC_STATIC_MATCH_RATIO          1025
 #define IDC_STATIC_OPTYPR               1026
+#define IDC_STATIC_MAX_HISTORY          1027
+#define IDC_MATCH_RATIO2                1028
+#define IDC_MAX_HISTORY                 1028
 #define IDC_CHECK_AUTO_COMPARE          1029
 #define ID_LOAD_FILE_ONE                32772
 #define ID_SETTING_LOAD                 32775

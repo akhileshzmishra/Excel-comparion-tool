@@ -85,6 +85,7 @@ IDB_BITMAP_FILELOAD     BITMAP                  "res\\bmp00004.bmp"
 IDB_BITMAP_FILE_LOAD_F  BITMAP                  "res\\bmp00005.bmp"
 IDB_BITMAP_FILELOAD_S   BITMAP                  "res\\bmp00006.bmp"
 IDB_BITMAP_TOOLTIPBTN_LOAD BITMAP                  "res\\bmp00006.bmp"
+IDB_BITMAP_FILE_BTN_NEW BITMAP                  "res\\bitmap2.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -133,7 +134,6 @@ BEGIN
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
- 
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
     POPUP "&Edit"
@@ -167,7 +167,6 @@ BEGIN
     POPUP "&Help"
     BEGIN
         MENUITEM "&About This project",         ID_APP_ABOUT
-
     END
 END
 
@@ -297,25 +296,27 @@ BEGIN
     CONTROL         "Find Down",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,37,97,90,10
 END
 
-IDD_OPTION_DLG DIALOGEX 0, 0, 313, 250
+IDD_OPTION_DLG DIALOGEX 0, 0, 313, 263
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Options"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,117,214,50,14
-    GROUPBOX        "General",IDC_STATIC,38,157,234,35
+    DEFPUSHBUTTON   "OK",IDOK,132,234,50,14
+    GROUPBOX        "General",IDC_STATIC,38,157,234,58
     GROUPBOX        "Optimization",IDC_STATIC,40,19,232,67
     LTEXT           "Page Size",IDC_STATIC,54,40,46,9
     LTEXT           "Tree Order",IDC_STATIC,54,58,44,13
     COMBOBOX        IDC_COMBO_PAGE_SIZE,123,36,115,13,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,WS_EX_TRANSPARENT
     COMBOBOX        IDC_COMBO_TREE_ORDER,123,58,115,13,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,WS_EX_TRANSPARENT
-    GROUPBOX        "Operation Type",IDC_STATIC,39,92,236,59
+    GROUPBOX        "Operation Type",IDC_STATIC,39,92,233,59
     LTEXT           "Operation type",IDC_STATIC_OPTYPR,53,111,60,9
     COMBOBOX        IDC_COMBO_OP_TYPE,123,109,115,13,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,WS_EX_TRANSPARENT
     LTEXT           "Match Ratio",IDC_STATIC_MATCH_RATIO,53,129,46,9
     EDITTEXT        IDC_MATCH_RATIO,123,126,116,13,ES_AUTOHSCROLL
     CONTROL         "Compare automatically when 2nd file is loaded",IDC_CHECK_AUTO_COMPARE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,172,185,9
+    LTEXT           "Maximum History to Keep",IDC_STATIC_MAX_HISTORY,51,196,89,9
+    EDITTEXT        IDC_MAX_HISTORY,145,193,92,13,ES_AUTOHSCROLL | ES_NUMBER
 END
 
 IDD_DIALOG4 DIALOGEX 0, 0, 575, 93
@@ -434,7 +435,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 306
         TOPMARGIN, 7
-        BOTTOMMARGIN, 242
+        BOTTOMMARGIN, 255
     END
 
     IDD_DIALOG4, DIALOG
@@ -625,18 +626,18 @@ END
 
 STRINGTABLE 
 BEGIN
-    ID_NEXT_DIFF            "go to next Difference\nNext difference"
-    ID_PREVIOUS_DIFF        "Go to previous difference\nPrevious Difference"
-    ID_SHOW_DIFF            "Show only different rows\nChanged rows"
-    ID_SHOWSAME_ONLY        "Show rows without any changes in both files\nSame rows"
-    ID_SHOW_ALL             "Show both changed and unchanged rows\nAll Rows"
+    ID_NEXT_DIFF            "Go to next Difference\nNext difference"
+    ID_PREVIOUS_DIFF        "Go to previous difference\nPrevious difference"
+    ID_SHOW_DIFF            "Display difference\nDifference"
+    ID_SHOWSAME_ONLY        "Only display unchanged data\nUnchanged"
+    ID_SHOW_ALL             "Compare without reloading\nCompare"
     ID_MOVERIGHT            "Copy data to right\nCopy left"
     ID_MOVELEFT             "Copy data to left\nCopy right"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_FILE_COMPARE         "Compare two files after loading from files\nCompare"
+    ID_FILE_COMPARE         "Compare data after loading from disk\nReload and Compare"
 END
 
 STRINGTABLE 

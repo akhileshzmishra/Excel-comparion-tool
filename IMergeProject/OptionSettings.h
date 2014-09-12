@@ -30,9 +30,11 @@ private:
 	void GetMatchPercentage();
 	void EnableMatchPercentageBox();
 	void GetAutoCompare();
+	void GetMaxHistory();
 public:
 	afx_msg void OnCbnSelchangeComboOpType();
 	afx_msg void OnEnChangeMatchRatio();
 	afx_msg void OnBnClickedRadioAutoCompare();
 	afx_msg void OnBnClickedCheckAutoCompare();
+	afx_msg void OnEnChangeMaxHistory();
 };

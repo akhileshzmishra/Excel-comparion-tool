@@ -20,7 +20,7 @@
 #define TABLE_HEIGHT 400
 #define CELL_HEIGHT 30
 #define GAP_DEFAULT 20
-#define LOAD_BTN_W 35
+#define LOAD_BTN_W 30
 #define LOAD_BTN_H	FIRST_TABLE_Y
 
 #define DIFF_POINTER_BUTTON_X  20
