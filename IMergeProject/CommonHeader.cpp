@@ -43,16 +43,13 @@ mFill(0)
 RowComparisonList::~RowComparisonList()
 {
 }
-void RowComparisonList::resize(int size)
-{
-	clear();
-	mRowList.resize(size);
-}
-void RowComparisonList::clear()
+
+
+void RowComparisonList::Clear()
 {
 	mFirstRowPos.clear();
 	mSecondRowPos.clear();
-	mRowList.clear();
+	mRowList.Clear();
 	mFill = 0;
 }
 
@@ -62,8 +59,7 @@ RowComparison* RowComparisonList::FindRow1(int r1)
 	RowItr itr = mFirstRowPos.find(r1);
 	if(itr != mFirstRowPos.end())
 	{
-		int index = (itr->second);
-		return &mRowList[index];
+		return &((itr->second)->Data());
 	}
 	return 0;
 }
@@ -72,8 +68,28 @@ RowComparison* RowComparisonList::FindRow2(int r2)
 	RowItr itr = mSecondRowPos.find(r2);
 	if(itr != mSecondRowPos.end())
 	{
-		int index = (itr->second);
-		return &mRowList[index];
+		return &((itr->second)->Data());
+	}
+	return 0;
+}
+
+RowComparisonList::Node* RowComparisonList::GetRow1Node(int r1)
+{
+	RowComparisonList::Node* findNode = 0;
+	RowItr itr = mFirstRowPos.find(r1);
+	if(itr != mFirstRowPos.end())
+	{
+		return itr->second;
+	}
+	return 0;
+}
+RowComparisonList::Node* RowComparisonList::GetRow2Node(int r2)
+{
+	RowComparisonList::Node* findNode = 0;
+	RowItr itr = mSecondRowPos.find(r2);
+	if(itr != mSecondRowPos.end())
+	{
+		return itr->second;
 	}
 	return 0;
 }
@@ -81,18 +97,14 @@ RowComparison* RowComparisonList::Insert(int r1, int r2)
 {
 	try
 	{
-		if(mFill >= mRowList.size())
-		{
-			mRowList.resize(2*mFill);
-		}
+		RowComparison rc(r1, r2);
 
-		mRowList[mFill].Row1 = r1;
-		mRowList[mFill].Row2 = r2;
+		mRowList.InsertAtBack(rc);
 
-		mFirstRowPos.insert(RowPair(r1, mFill));
-		mSecondRowPos.insert(RowPair(r2, mFill));
+		mFirstRowPos.insert(RowPair(r1, mRowList.BackNode()));
+		mSecondRowPos.insert(RowPair(r2, mRowList.BackNode()));
 		mFill++;
-		return &mRowList[mFill - 1];
+		return &(mRowList.BackNode()->Data());
 	}
 	catch(...)
 	{
@@ -103,38 +115,24 @@ RowComparison* RowComparisonList::Insert(int r1, int r2)
 
 RowComparison* RowComparisonList::AtLastFill()
 {
-	if(mFill < 0 || mFill >= mRowList.size())
+	if(mRowList.BackNode())
 	{
-		return 0;
+		return &(mRowList.BackNode()->Data());
 	}
-	return (&mRowList[mFill - 1]);
+	return 0;
 }
 
 void RowComparisonList::Delete(int r1, int r2)
 {
-	mFirstRowPos.erase(r1);
-	mSecondRowPos.erase(r2);
-}
-
-int RowComparisonList::FindIndex1(int r1)
-{
+	Node* n = 0;
 	RowItr itr = mFirstRowPos.find(r1);
 	if(itr != mFirstRowPos.end())
 	{
-		int index = (itr->second);
-		return index;
+		n = itr->second;
+		mRowList.Delete(n);
 	}
-	return -1;
-}
-int RowComparisonList::FindIndex2(int r2)
-{
-	RowItr itr = mSecondRowPos.find(r2);
-	if(itr != mSecondRowPos.end())
-	{
-		int index = (itr->second);
-		return index;
-	}
-	return -1;
+	mFirstRowPos.erase(r1);
+	mSecondRowPos.erase(r2);
 }
 
 
@@ -142,9 +140,8 @@ int RowComparisonList::FindIndex2(int r2)
 
 
 RowComparisonIterator::RowComparisonIterator(RowComparisonList* mlist):
-mitr(0),
-mList(mlist),
-mThisValue(0)
+LinkedListItr<RowComparison>(&(mlist->mRowList)),
+mList(mlist)
 {
 	Reset();
 }
@@ -154,202 +151,59 @@ RowComparisonIterator::~RowComparisonIterator()
 
 bool RowComparisonIterator::IsEnd()
 {
-	if(!mList)
-		return false;
-	return ((mitr >= mList->mFill));
+	return AtEnd();
 }
 bool RowComparisonIterator::IsBegin()
 {
-	if(!mList)
-		return false;
-
-	return ((mitr < 0));
+	return AtFirst();
 }
 bool RowComparisonIterator::IsValid()
 {
 	if(!mList)
 		return false;
 
-	return ((mitr >= 0) && (mitr < mList->mFill));
-}
-void RowComparisonIterator::Reset(bool toLast)
-{
-	if(!mList)
-		return;
-	
-	RowComparison* comp1 = 0, *comp2 = 0;
-	mThisValue = 0;
-	if(toLast)
-	{
-		mitr =	mList->mFill - 1;
-		while(!comp1 && !comp2 && IsValid())
-		{
-			comp1 = mList->FindRow1(mList->mRowList[mitr].Row1);
-			comp2 = mList->FindRow2(mList->mRowList[mitr].Row2);
-			if(!comp1 && !comp2)
-			{
-				mitr--;
-			}
-		}
-		mThisValue = comp1; 
-	}
-	else
-	{
-		mitr = 0;
-		while(!comp1 && !comp2 && IsValid())
-		{
-			comp1 = mList->FindRow1(mList->mRowList[mitr].Row1);
-			comp2 = mList->FindRow2(mList->mRowList[mitr].Row2);
-			if(!comp1 && !comp2)
-			{
-				mitr++;
-			}
-		}
-		mThisValue = comp1; 
-	}
-}
-void RowComparisonIterator::operator ++()
-{
-	if(!mList)
-		return;
-	RowComparison* comp1 = 0, *comp2 = 0;
-	mThisValue = 0;
-	mitr++;
-	while(!comp1 && !comp2 && IsValid())
-	{ 		
-		comp1 = mList->FindRow1(mList->mRowList[mitr].Row1);
-		comp2 = mList->FindRow2(mList->mRowList[mitr].Row2);
-		if(!comp1 && !comp2)
-		{
-			mitr++;
-		}
-		
-	}
-	if(comp1 && comp2)
-	{
-		mThisValue = comp1; 
-	}
-	else
-	{
-		//Reset();
-	}
-}
-void RowComparisonIterator::operator ++(int)
-{
-	if(!mList)
-		return;
-
-	RowComparison* comp1 = 0, *comp2 = 0;
-	mThisValue = 0;
-	mitr++;
-	while(!comp1 && !comp2 && IsValid())
-	{
-		comp1 = mList->FindRow1(mList->mRowList[mitr].Row1);
-		comp2 = mList->FindRow2(mList->mRowList[mitr].Row2);
-		if(!comp1 && !comp2)
-		{
-			mitr++;
-		}
-		
-	}
-	if(comp1 && comp2)
-	{
-		mThisValue = comp1; 
-	}
-	else
-	{
-		//Reset();
-	}
+	return Value() != 0;
 }
 
 
-void RowComparisonIterator::operator --()
-{
-	if(!mList)
-		return;
-	RowComparison* comp1 = 0, *comp2 = 0;
-	mitr--;
-	mThisValue = 0;
-	while(!comp1 && !comp2 && IsValid())
-	{
-		comp1 = mList->FindRow1(mList->mRowList[mitr].Row1);
-		comp2 = mList->FindRow2(mList->mRowList[mitr].Row2);
-		if(!comp1 && !comp2)
-		{
-			mitr--;
-		}
-		
-	}
-	if(comp1 && comp2)
-	{
-		mThisValue = comp1; 
-	}
-	else
-	{
-		//Reset();
-	}
-}
-void RowComparisonIterator::operator --(int)
-{
-	if(!mList)
-		return;
-
-	RowComparison* comp1 = 0, *comp2 = 0;
-	mThisValue = 0;
-	mitr--;
-	while(!comp1 && !comp2 && IsValid())
-	{
-		comp1 = mList->FindRow1(mList->mRowList[mitr].Row1);
-		comp2 = mList->FindRow2(mList->mRowList[mitr].Row2);
-		if(!comp1 && !comp2)
-		{
-			mitr--;
-		}
-		
-	}
-	if(comp1 && comp2)
-	{
-		mThisValue = comp1; 
-	}
-	else
-	{
-		//Reset();
-	}
-}
 void RowComparisonIterator::DeleteCurrValue()
 {
-	if(!mList)
-		return;
-	if(!IsValid())
-		return;
-
-	if(!GetValue())
-		return;
-
-	mList->Delete(GetValue()->Row1, GetValue()->Row2);
+	if(mList && Value())
+	{
+		mList->Delete(Value()->Row1, Value()->Row2);
+	}
 }
 
-
-
-void RowComparisonIterator::MoveToIndex(int placeIdx)
+void RowComparisonIterator::ResetToFront()
 {
-	if ((placeIdx >= 0) && (placeIdx < mList->mFill))
+	SetToBack();
+}
+void RowComparisonIterator::ResetToBack()
+{
+	SetToFront();
+}
+
+bool RowComparisonIterator::MoveToRow(int row, bool firstIndex)
+{
+	if(!mList)
 	{
-		mitr = placeIdx;
+		return false;
 	}
-	RowComparison* comp1 = 0, *comp2 = 0;
-
-	comp1 = mList->FindRow1(mList->mRowList[mitr].Row1);
-	comp2 = mList->FindRow2(mList->mRowList[mitr].Row2);
-
-	if(comp1 && comp2 && IsValid())
+	RowComparisonList::Node* findValue = 0;
+	if(firstIndex)
 	{
-		mThisValue = comp1; 
+		findValue = mList->GetRow1Node(row);
 	}
 	else
 	{
-		//Reset();
+		findValue = mList->GetRow2Node(row);
 	}
+	if(findValue)
+	{
+		__SetItrAT(findValue);
+		return true;
+	}
+	return false;
 }
 
 
