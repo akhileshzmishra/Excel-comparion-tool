@@ -54,8 +54,8 @@ void GridViewHelper::m_RunSaveDB()
 	if(!mpDbParam || !m_Helped)
 		return;
 
-	m_Helped->mSaveToDataBase(mpDbParam->r, mpDbParam->c, mpDbParam->value);
-	delete mpDbParam;
+	//m_Helped->mSaveToDataBase(mpDbParam->r, mpDbParam->c, mpDbParam->value);
+//	delete mpDbParam;
 }
 
 
