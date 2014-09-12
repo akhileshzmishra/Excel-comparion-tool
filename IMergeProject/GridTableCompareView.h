@@ -42,7 +42,8 @@ class GridTableCompareView	 : public XLCtrlSubject
 	int                                   m_iMaxCol;
 	CWnd*                                 m_pParentWnd;
 	int                                   m_Partitions[3];
-	RowComparisonList                     m_iChangedCols;
+	RowComparisonList                     m_ChangedRowList;
+	RowComparisonList                     m_UnchangedRowList;
 	XLTableParam                          m_CurrentState;
 	PositionMap                           m_GridToContainerMap[2];
 	RowComparisonIterator                 m_CompItr;
@@ -70,7 +71,7 @@ public:
 
 	bool IsReady()
 	{
-		return (m_bReady && (NumberofDrawableTables() >= 2));
+		return (m_bReady && (__TotalDrawableTables() >= 2));
 	}
 
 	int GetMaxRow()
@@ -83,7 +84,7 @@ public:
 		return m_iMaxCol;
 	}
 
-	CompareResult Compare(XLTableParam param = XLTableParamFullTable);
+	CompareResult Compare(XLTableParam param = XLTableParamReloadTable);
 
 	void ResetTables();
 	void ResetContainers();
@@ -91,19 +92,26 @@ public:
 	void NextDifference();
 	void PrevDifference();
 	CompareResult CreateDiffTable();
-	void CreateSameTable();
-	void CreateAllTable();
+	CompareResult CreateSameTable();
+	CompareResult CreateAllTable();
 	void CreateEmptyGrid();
 
 	//Function overloaded from observer
 	void Notify(XLObservedData* data, XLEventType condition);
 	void SaveToDatabase(int r, int c, CString& value);
+#if 0
 	void SaveToTable(int r, int c, CString& value, int table);
+#endif
 	void OnCopyFromRightToLeft(int r1, int r2, int c1, int c2);
 	void OnCopyFromLeftToRight(int r1, int r2, int c1, int c2);
+	void OnMoveFromRightToLeft(int r1, int r2, int c1, int c2);
+	void OnMoveFromLeftToRight(int r1, int r2, int c1, int c2);
 
-	void Clear();
-   
+
+
+
+	//Functions  called by view. (includes button on taskbar)
+	void Clear();   
 	void ICopyRightToLeft();
 	void ICopyLeftToRight();
 	void LineCopyLeftToRight();
@@ -122,42 +130,50 @@ public:
 	void ArrowPosition(int X, int Y);
 	void UndoChanges();
 	void GoToRow(int row, int table);
-	RETURNTYPE& ChangedRowNumber()
+	RowComparisonList& ChangedRowNumber()
 	{
-		return m_Comparator.ChangedRows();
+		return m_ChangedRowList;
 	}
+
+
+
+
 private:
-	void m_fillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int c, int gr, int gc);
-	void m_fillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int gr, int c);
-	void m_fillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int c);
+	void __FillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int c, int gr, int gc);
+	void __FillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int gr, int c);
+	void __FillGrid(CGridCtrl* grid, XLCellDataContainer* container, int r, int c);
 
 
-	void CreateGrid(CGridCtrl*& grid, XLCellDataContainer* container, int position);
-	int NumberofDrawableTables();
+	void __CreateGridView(CGridCtrl*& grid, XLCellDataContainer* container, int position);
+	int __TotalDrawableTables();
 
-	void SetRowColor(int table, int r, COLORREF ref);
+	void __SetRowColor(int table, int r, COLORREF ref);	
 
-	void FormatCells();
-	void FormatATable(int tableI);
+	void __MoveIndicators(bool ForceHide = false);
 
-	void MoveIndicators(bool ForceHide = false);
+	void __InterChangeData(XLCellDataContainer* From, XLCellDataContainer* To, int r1, int c1, int r2, int c2);
+	void __CreateComparisonDataStructure();
+	void __InsertInUnchangedFromChanged(int row1, int row2);
 
-	void InterChangeData(XLCellDataContainer* From, XLCellDataContainer* To, int r1, int c1, int r2, int c2);
-	void CreateComparisonDataStructure();
+	void __ShowIndicators(int Y, int TableNum);
+	void __HideIndicators(int TableNum);
 
-	void mShowIndicators(int Y, int TableNum);
-	void mHideIndicators(int TableNum);
+	void __DrawDiffTable();
+	void __DrawSameTable();
 
-	void mDrawDiffTable();
-	void mDrawSameTable();
+	void __SaveDataFromGridToContainer(int r, int c, int table, CString& value);
+	void __SaveDataFromHistory(int r, int c, int table, XLCellData* value);
 
-	void mSaveToDataBase(int r, int c, CString& value);
+	void __NotifyFileChange(int tbl);
+	void __NotifyFileSaved();
+	void __NotifySidebar(XLEventType eventType, int row1, int row2);
+	void __SetMaxSizeForGridCreation();	
 
-	void NotifyFileChange(int tbl);
-	void NotifyFileSaved();
-	void m_SetMaxRowColForGridCreation();	
+	void __RecordThisInHistory(int tableID, CellIdentifier contCell, XLCellData* data);
 
-	void RecordInHistory(int tableID, CellIdentifier contCell, XLCellData* data);
+	void __FormatAllTables();
+	void __FormatATable(int tableI);
+	void __FormatARow(int gridrow, int tableI);
 
 	
 };
