@@ -14,6 +14,7 @@
 #include <string.h>
 #include "BoyerMoore.h"
 #include "CommonHeader.h"
+
 enum
 {
 	FILE_A_LOADED,
@@ -69,6 +70,9 @@ class CSettingsSM
 	double                  m_dMatchPercentage;
 	XLComparatorOperation   m_OpType;
 	bool                    m_bAutoCompare;
+	bool                    m_bFileAChanged;
+	bool                    m_bFileBChanged;
+	int                     m_iMaxHistorySize;
 public:
 	~CSettingsSM();
 private:
@@ -77,14 +81,38 @@ private:
 public:
 	static CSettingsSM* GetInstance();
 
-	COLORREF GetSameColor();
-	COLORREF GetDifferentColor();
-	COLORREF GetSameTextColor();
-	COLORREF GetDifferentTextColor();
+	COLORREF GetSameCellColorInDiffRow();
+	COLORREF GetDiffCellColorInDiffRow();
+	COLORREF GetSameTxtColorInDiffRow();
+	COLORREF GetDiffTxtColorInDiffRow();
+	COLORREF GetEmptyRowColor();
+	COLORREF GetSideBarBGColor();
+	COLORREF GetXferredBGColor();
+	COLORREF GetXferredTxtColor();
 
 	bool GetAutoCompare()
 	{
 		return m_bAutoCompare;
+	}
+
+	void SetFileAChanged(bool set)
+	{
+		m_bFileAChanged = set;
+	}
+
+	bool GetFileAChanged()
+	{
+		return m_bFileAChanged;
+	}
+
+	void SetFileBChanged(bool set)
+	{
+		m_bFileBChanged = set;
+	}
+
+	bool GetFileBChanged()
+	{
+		return m_bFileBChanged;
 	}
 
 	void SetAutoCompare(bool set)
@@ -130,6 +158,13 @@ public:
 		{
 			m_dMatchPercentage = percent;
 		}
+	}
+
+	void SetMaxHistorySize(int size);
+
+	int GetMaxHistorySize()
+	{
+		return m_iMaxHistorySize;
 	}
 
 	XLComparatorOperation GetOperationType()
