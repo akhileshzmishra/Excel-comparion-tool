@@ -31,6 +31,7 @@ enum LinkedListEvents
 	LinkedList_DeleteNodeBack,
 
 	LinkedList_DeleteNode,
+	LinkedList_ClearedAll,
 
 	LinkedListEvents_Maximum
 };
@@ -61,24 +62,44 @@ public:
 	}
 	~LinkedList()
 	{
+		Clear();
+	}
+
+	void Clear()
+	{
 		LListNode<T>* node = mHead;
 		while(node)
 		{
-			Delete(node);
+			mHead = mHead->Next();
+			delete node;
 			node = mHead;
 		}
+		mHead = 0;
+		mTail = 0;
+		mElements = 0;
+		CallListener(LinkedList_ClearedAll, 0);
 	}
-	
+
+	LListNode<T>* FrontNode()
+	{
+		return mHead;
+	}
+
+	LListNode<T>* BackNode()
+	{
+		return mTail;
+	}
+
 	void InsertAtBack(T data)
 	{
+		LListNode<T>* newNode = new LListNode<T>(data);
 		if(!mTail)
 		{
-			mTail = new LListNode<T>(data);
+			mTail = newNode;
 			mHead = mTail;
 		}
 		else
 		{
-			LListNode<T>* newNode = new LListNode<T>(data);
 			mTail->Next() = newNode;
 			newNode->Previous() = mTail;
 			mTail = mTail->Next();
@@ -111,7 +132,10 @@ public:
 		output = mHead->Data();	
 		LListNode<T>* secHead = mHead;
 		mHead = mHead->Next();
-		mHead->Previous() = 0;
+		if(mHead)
+		{
+			mHead->Previous() = 0;
+		}
 		if(mTail == secHead)
 		{
 			mTail = 0;
@@ -122,27 +146,6 @@ public:
 		return true;
 
 	}
-	void PopFrontPushBack()
-	{
-		if(!mHead || !mTail)
-		{
-			return;
-		}
-		LListNode<T>* secHead = mHead;
-		mHead = mHead->Next();
-		if(!mHead)
-		{
-			mHead = mTail;
-		}
-		else
-		{
-			secHead->Next() = 0;
-			mHead->Previous() = 0;
-			mTail->Next() = secHead;
-			secHead->Previous() = mTail;
-			mTail = mTail->Next();
-		}
-	}
 	bool RemoveFromBack(T& output)
 	{
 		if(!mTail)
@@ -151,7 +154,10 @@ public:
 		output = mTail->Data();
 		LListNode<T>* secHead = mTail;
 		mTail = mTail->Previous();
-		mTail->Next() = 0;
+		if(mTail)
+		{
+			mTail->Next() = 0;
+		}
 		if(mHead == secHead)
 		{
 			mHead = 0;
@@ -251,6 +257,31 @@ public:
 			mItr = mList->mHead;
 		}
 	}
+
+	void DeleteThis()
+	{
+		if(mList)
+		{
+			mList->Delete(mItr);
+		}
+	}
+
+	void SetToFront()
+	{
+		if(mList)
+		{
+			mItr = mList->FrontNode();
+		}
+	}
+
+	void SetToBack()
+	{
+		if(mList)
+		{
+			mItr = mList->BackNode();
+		}
+	}
+
 	void operator++()
 	{
 		if(!mItr)
@@ -409,8 +440,19 @@ public:
 				}
 			}
 			break;
+		case LinkedList_ClearedAll:
+			mItr = 0;
+			break;
 		default:
 			break;
+		}
+	}
+protected:
+	void __SetItrAT(LListNode<T>* node)
+	{
+		if(mList && node)
+		{
+			mItr = node;
 		}
 	}
 };
