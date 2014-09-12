@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "Settings.h"
 #include "CommonHeader.h"
+#include "HistoryManager.h"
+
 CSettings* CSettings::m_Instance = NULL;
 CSettingsSM* CSettingsSM::m_InstancesSM = NULL;
 
@@ -70,7 +72,10 @@ m_iDefPocketSize(DEF_POCKET_SIZE),
 m_iDefOrder(DEF_ORDER_SIZE),
 m_dMatchPercentage(0.3),
 m_OpType(XLComparatorOperation_O2),
-m_bAutoCompare(true)
+m_bAutoCompare(true),
+m_bFileAChanged(false),
+m_bFileBChanged(false),
+m_iMaxHistorySize(MAX_HISTORY_SIZE)
 {
 }
 CSettingsSM* CSettingsSM::GetInstance()
@@ -137,21 +142,48 @@ void CSettingsSM::OnCompareDone()
 	StoreFlag(SHOW_ALL_FLAG);
 }
 
+void CSettingsSM::SetMaxHistorySize(int size)
+{
+	if(size > 0)
+	{
+		m_iMaxHistorySize = size;
+		XLHistory::CHistoryManager::GetInstance()->SetMaxHistory(size);
+	}
+}
 
 
-COLORREF CSettingsSM::GetSameColor()
+COLORREF CSettingsSM::GetSameCellColorInDiffRow()
 {
 	return MEDAQUAMARCOL;
 }
-COLORREF CSettingsSM::GetDifferentColor()
+COLORREF CSettingsSM::GetDiffCellColorInDiffRow()
 {
 	return DARKREDCOL;
 }
-COLORREF CSettingsSM::GetSameTextColor()
+COLORREF CSettingsSM::GetSameTxtColorInDiffRow()
 {
 	return BLUECOL;
 }
-COLORREF CSettingsSM::GetDifferentTextColor()
+COLORREF CSettingsSM::GetDiffTxtColorInDiffRow()
 {
 	return DARKSLATEGRAYCOL;
+}
+
+COLORREF CSettingsSM::GetEmptyRowColor()
+{
+	return LIGHTGRAYCOLOR;
+}
+
+COLORREF CSettingsSM::GetSideBarBGColor()
+{
+	return ALICEBLUE;
+}
+
+COLORREF CSettingsSM::GetXferredBGColor()
+{
+	return WHITECOL;
+}
+COLORREF CSettingsSM::GetXferredTxtColor()
+{
+	return BLACKCOL;
 }
