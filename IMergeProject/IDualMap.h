@@ -58,6 +58,26 @@ public:
 		mSecond.erase(x);
 	}
 
+	void DeleteAsPerFirst(T& t)
+	{
+		FirstItr itr = mFirst.find(t);
+		if(itr != mFirst.end())
+		{
+			X x = itr->second;
+			Delete(t, x);
+		}
+	}
+
+	void DeleteAsPerSecond(X& x)
+	{
+		SecondItr itr = mSecond.find(x);
+		if(itr != mSecond.end())
+		{
+			T t = itr->second;
+			Delete(t, x);
+		}
+	}
+
 	int Size()
 	{
 		return (int)mFirst.size();
