@@ -1,24 +1,31 @@
 #include "StdAfx.h"
 #include "HistoryManager.h"
 
+using namespace XLHistory;
+
 CHistoryManager* CHistoryManager::m_ManagerInstance	= 0;
 
 
-void InsertHistory(HistDataPair& histPair)
+void XLHistory::InsertHistory(XLHistoryData::HistDataPair& histPair)
 {
 	CHistoryManager::GetInstance()->RecordHistory(histPair);
 }
-HistDataPair* RemoveRecentHistory()
+XLHistoryData::HistoryDataSPtr XLHistory::RemoveRecentHistory()
 {
 	return CHistoryManager::GetInstance()->GetRecentData();
 }
 
-void ClearHistory()
+void XLHistory::ClearHistory()
 {
 	CHistoryManager::GetInstance()->Clear();
 }
 
-void EnableHistory(bool set)
+int XLHistory::RemainingHistory()
+{
+	return CHistoryManager::GetInstance()->CurrentHistorySize();
+}
+
+void XLHistory::EnableHistory(bool set)
 {
 	CHistoryManager::GetInstance()->Enable(set);
 }
@@ -42,7 +49,13 @@ CHistoryManager* CHistoryManager::GetInstance()
 }
 
 
-void CHistoryManager::RecordHistory(HistDataPair& histPair)
+int CHistoryManager::CurrentHistorySize()
+{
+	return mHistoryData.Size();
+}
+
+
+void CHistoryManager::RecordHistory(XLHistoryData::HistDataPair& histPair)
 {
 	if(mbRecord)
 	{
@@ -50,14 +63,10 @@ void CHistoryManager::RecordHistory(HistDataPair& histPair)
 	}
 }
 
-HistDataPair* CHistoryManager::GetRecentData()
+XLHistoryData::HistoryDataSPtr CHistoryManager::GetRecentData()
 {
-	HistDataPair* cellData = mHistoryData.FindRecentAndPop();
-	if(cellData)
-	{
-		return cellData;
-	}
-	return 0;
+	XLHistoryData::HistoryDataSPtr cellData = mHistoryData.FindRecentAndPop();
+	return cellData;
 }
 
 void CHistoryManager::Clear()
