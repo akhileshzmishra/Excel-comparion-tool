@@ -3,6 +3,8 @@
 #include "CommonHeader.h"
 #include "Settings.h"
 
+
+
 XLComparator::XLComparator(std::vector<int>& keys):
 m_vUniqueKeys(keys),
 m_iOperationType(XLComparatorOperation_O1),
@@ -74,7 +76,13 @@ bool XLComparator::m_CompareBasic()
 	XLCellDataProvider rowProvider1(m_A);
 	XLCellDataProvider rowProvider2(m_B);	
 	XLDataCompareClass xlcomp(rowProvider1, rowProvider2);
-	return xlcomp.Compare(m_UnChangedRows);
+
+	if (xlcomp.Compare(m_UnChangedRows))
+	{
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -197,8 +205,8 @@ bool XLComparator::m_CompareUniqueKeys(XLCDRow* r1, XLCDRow* r2)
 
 void XLComparator::m_FindChangedRows(XLCellDataContainer* A, XLCellDataContainer* B)
 {
-	int R1 = m_R1;
-	int R2 = m_R2;
+	int R1 = A->Row();
+	int R2 = B->Row();
 	int TableMaxSize = R1;	 
 	if(TableMaxSize < R2)
 	{
@@ -209,7 +217,6 @@ void XLComparator::m_FindChangedRows(XLCellDataContainer* A, XLCellDataContainer
 	int length = m_UnChangedRows.size();
 	if(length == 0)
 	{
-		m_ChangedRows.clear();
 		m_ChangedRows.resize(TableMaxSize);
 		for(int i = 0; i < R1; i++)
 		{
@@ -222,7 +229,6 @@ void XLComparator::m_FindChangedRows(XLCellDataContainer* A, XLCellDataContainer
 	}
 	else
 	{
-		m_ChangedRows.clear(); 
 		m_ChangedRows.resize((TableMaxSize - length), ComparedDataPair(INVALIDROW, INVALIDROW));
 
 		int i = 0;
@@ -316,9 +322,11 @@ bool XCellDataComparator::CompareRows(XLCDRow& A, XLCDRow& B)
 	{
 		return false;
 	}
+	//If any dummy row is in comparison, we say that it cannot be compared.
+	//Part of the logic being that we do not want dummy/empty rows in the unchanged  list
 	if(A.IsDummy() || B.IsDummy())
 	{
-		return true;
+		return false;
 	}
 	for(int i = 0; i < A.size(); i++)
 	{
