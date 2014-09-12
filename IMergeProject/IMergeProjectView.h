@@ -80,7 +80,7 @@ public:
 #endif
 
 protected:
-	void CreateGrid();
+	void __CreateGridView();
 	void DestroyGrid();
 	void CreateSideBar();
 	void ChangeMode(int past);
