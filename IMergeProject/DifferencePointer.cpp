@@ -9,8 +9,8 @@
 
 // CDifferencePointer
 
-static const XLEventType Conditions[] = {GRID_POINTER_MOVE_LEFT};
-static const XLEventType ConditionsR[] = {GRID_POINTER_MOVE_RIGHT};
+static const XLEventType Conditions[] = {XLEVENT_POINTER_LEFT_MOVE};
+static const XLEventType ConditionsR[] = {XLEVENT_POINTER_RIGHT_MOVE};
 
 IMPLEMENT_DYNAMIC(CDifferencePointer, CBitmapButton)
 

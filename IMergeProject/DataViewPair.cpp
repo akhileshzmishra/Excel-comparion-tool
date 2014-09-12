@@ -37,7 +37,7 @@ CGridCtrl* DataViewPair::CreateGrid(RECT rect, CWnd* parent, UINT uint)
 {
 	if(m_bLoad && m_Container)
 	{
-		m_pGrid = new CGridCtrl(m_Container->Row(), m_Container->Col());
+		//m_pGrid = new CGridCtrl(m_Container->Row(), m_Container->Col());
 	}
 	m_pGrid->Create(rect, parent, uint);
 	return m_pGrid;

@@ -3,7 +3,7 @@
 
 
 #pragma once
-#include "GridCtrl.h"
+#include "Grid/GridCtrl.h"
 #include "XLCommonHeader.h"
 #include "CommonHeader.h"
 #include "XLCellDataContainer.h"

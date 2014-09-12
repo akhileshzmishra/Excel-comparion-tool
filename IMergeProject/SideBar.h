@@ -37,7 +37,8 @@ protected:
 
 
 private:
-	void DrawStrip(CDC* pDC, int top, int portion);
+	void __DrawStrip(CDC* pDC, int top, int portion);
+	void __DrawBGRect(CDC* pDC);
 };
 
 

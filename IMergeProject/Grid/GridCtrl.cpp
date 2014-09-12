@@ -147,7 +147,7 @@ static char THIS_FILE[] = __FILE__;
 #pragma message(" -- CGridCtrl: No printing support")
 #endif
 
-static const XLEventType RegisterConditions[] = {GRID_VSCROLL, GRID_HSCROLL	 };
+static const XLEventType RegisterConditions[] = {XLEVENT_GRID_VSCROLL, XLEVENT_GRID_HSCROLL	 };
 
 IMPLEMENT_DYNCREATE(CGridCtrl, CWnd)
 
@@ -1738,10 +1738,10 @@ void CGridCtrl::Notify(XLObservedData* data, XLEventType* type)
 
 	switch(data->EventType)
 	{
-	case GRID_VSCROLL:
+	case XLEVENT_GRID_VSCROLL:
 		DoVScroll(*data);
 		break;
-	case GRID_HSCROLL:
+	case XLEVENT_GRID_HSCROLL:
 		DoHScroll(*data);
 		break;
 	default:
@@ -1761,7 +1761,7 @@ void CGridCtrl::OnVScroll(UINT nSBCode, UINT /*nPos*/, CScrollBar* /*pScrollBar*
 {
 	XLObservedData data;
 	data.Data = nSBCode;
-	data.EventType = GRID_VSCROLL; 
+	data.EventType = XLEVENT_GRID_VSCROLL; 
 	int scrollPos = 0;
 	if((SB_THUMBTRACK == nSBCode) || (SB_THUMBPOSITION == nSBCode))
 	{
@@ -1787,7 +1787,7 @@ void CGridCtrl::OnHScroll(UINT nSBCode, UINT /*nPos*/, CScrollBar* /*pScrollBar*
 {
     XLObservedData data;
 	data.Data = nSBCode;
-	data.EventType = GRID_HSCROLL; 
+	data.EventType = XLEVENT_GRID_HSCROLL; 
 	int scrollPos = 0;
 	if((SB_THUMBTRACK == nSBCode) || (SB_THUMBPOSITION == nSBCode))
 	{

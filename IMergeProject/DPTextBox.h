@@ -5,6 +5,7 @@
 
 class DPTextBox	:   public CEdit, public XLCtrlObserver
 {
+	typedef CEdit _Parent;
 	CString    m_String;
 	std::string m_str;
 	RECT       m_Rectangle;

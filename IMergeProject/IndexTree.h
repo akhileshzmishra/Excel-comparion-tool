@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <iostream>
+#include <stack>
 
 using namespace std;
 namespace IndexTreeSpace
@@ -534,17 +535,17 @@ public:
 		return false;
 	}
 
-	bool Value(int index, IndexTreeNode<T>*& ret)
+	bool Value(int index, _Class*& ret)
 	{
 		if(IsLeaf())
 		{
 			return false;
 		}
 
-		IndexTreeNode<T>* tValue = m_ChildUnion.m_ChildList->Value(index);
+		_ChildNode* tValue = m_ChildUnion.m_ChildList->Value(index);
 		if(tValue)
 		{
-			ret = tValue;
+			ret = tValue->Node();
 			return true;
 		}
 		return false;
@@ -556,6 +557,8 @@ public:
 		//return __GetChildNormal(absoluteIdx);
 		return __GetChild(absoluteIdx);
 	}
+
+	
 
 
 
@@ -773,6 +776,7 @@ template<class T>
 class CIndexTree
 {
 	typedef IndexTreeNode<T>           _Node;
+	typedef std::stack<_Node*>         _StackNode;
 	_Node*                             m_pHead;
 	int                                m_iPocketSize;
 	int                                m_iOrder;
@@ -784,6 +788,11 @@ public:
 	{
 	}
 
+	~CIndexTree()
+	{
+		__DeleteAll(false);
+	}
+
 	int Size()
 	{
 		if(m_pHead)
@@ -791,6 +800,11 @@ public:
 			return m_pHead->Size();
 		}
 		return 0;
+	}
+
+	bool Clear()
+	{
+		return __DeleteAll();
 	}
 
 	bool Insert(int index, T Data)
@@ -1040,6 +1054,42 @@ private:
 				parent->Delete(pItr->Position());
 			}
 			pItr = parent;
+		}
+		return true;
+	}
+
+	bool __DeleteAll(bool recreateHead = true)
+	{
+		_StackNode sn;
+		sn.push(m_pHead);
+
+		_Node* child = 0;
+		_Node* currNode = 0;
+		while(sn.size() > 0)
+		{
+			currNode = sn.top();
+			sn.pop();
+
+			int childCount = currNode->ChildListSize();
+			for(int i = 0; i < childCount; i++)
+			{
+				if(currNode->Value(i, child))
+				{
+					if(child)
+					{
+						sn.push(child);
+					}
+				}
+			}
+			delete currNode;
+		}
+		if(recreateHead)
+		{
+			m_pHead = new _Node(m_iPocketSize, true);
+		}
+		else
+		{
+			m_pHead = 0;
 		}
 		return true;
 	}
