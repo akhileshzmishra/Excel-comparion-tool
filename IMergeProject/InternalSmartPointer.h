@@ -20,7 +20,13 @@ public:
 	~XLSmartPtr()
 	{
 		if(m_ptr)
+		{
 			delete m_ptr;
+		}
+	}
+	bool Viable()
+	{
+		return (m_ptr != 0);
 	}
 	T* operator->()
 	{
@@ -34,9 +40,17 @@ public:
 	{
 		if(this == &other)
 			return *this;
-		m_ptr = data.m_ptr;
-		data.m_ptr = 0;
+		m_ptr = other.m_ptr;
+		other.m_ptr = 0;
 		return *this;
+	}
+	bool operator !()
+	{
+		return !(Viable());
+	}
+	operator bool()
+	{
+		return Viable();
 	}
 
 };
