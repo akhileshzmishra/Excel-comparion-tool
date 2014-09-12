@@ -12,15 +12,15 @@ public:
 	virtual ~CSaveDialog();
 	bool IsLeft()
 	{
-		return (mbLeft   > 0);
+		return (m_bLeft);
 	}
 	bool IsRight()
 	{
-		return (m_bRight   > 0);
+		return (m_bRight);
 	}
 	bool IsAll()
 	{
-		return (m_bAll   > 0);
+		return (m_bAll);
 	}
 
 // Dialog Data
@@ -31,7 +31,12 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
-	int mbLeft;
-	int m_bRight;
-	int m_bAll;
+	bool m_bLeft;
+	bool m_bRight;
+	bool m_bAll;
+	afx_msg void OnBnClickedRadioAll();
+	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
+	afx_msg void OnBnClickedRadioLeft();
+	afx_msg void OnBnClickedRadioRight();
+	afx_msg void OnBnClickedOk();
 };
