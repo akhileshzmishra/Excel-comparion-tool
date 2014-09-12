@@ -6,6 +6,86 @@
 #include "ExcelDataExtraction.h"
 #include "XLLCS.h"
 #include "CommonHeader.h"
+#include "IndexTree.h"
+
+
+class XLMalleablePairList
+{
+	typedef std::pair<int, int>                               _IndexPair;
+	typedef IndexTreeSpace::CIndexTree<_IndexPair >           _MappedIndex;
+	_MappedIndex                                              m_IndexMap;
+	_IndexPair                                                m_DummyPair;
+public:
+	XLMalleablePairList(int initialVal = 0) :
+		m_IndexMap(16, 16)
+	{
+		AddSpace(initialVal);
+	}
+
+	void AddSpace(int items)
+	{
+		for (int i = 0; i < items; i++)
+		{
+			m_IndexMap.Pushback(_IndexPair(0, 0));
+		}
+	}
+
+	void AddSpace(int items, _IndexPair p)
+	{
+		for (int i = 0; i < items; i++)
+		{
+			m_IndexMap.Pushback(p);
+		}
+	}
+
+	void ReInitialize(int items)
+	{
+		m_IndexMap.Clear();
+		AddSpace(items);
+	}
+
+	void ReInitialize(int items, _IndexPair p)
+	{
+		m_IndexMap.Clear();
+		AddSpace(items, p);
+	}
+
+	void Clear()
+	{
+		m_IndexMap.Clear();
+	}
+
+	_IndexPair& operator [] (int index)
+	{
+		_IndexPair* p;
+		if(m_IndexMap.Value(index, p))
+		{
+			return *p;
+		}
+		return m_DummyPair;
+	}
+
+	bool Insert(int index, _IndexPair p)
+	{
+		return m_IndexMap.Insert(index, p);
+	}
+
+	bool Pushback(_IndexPair p)
+	{
+		return m_IndexMap.Pushback(p);
+	}
+	
+	bool Delete(int index)
+	{
+		return m_IndexMap.Delete(index);
+	}
+
+	int size()
+	{
+		return m_IndexMap.Size();
+	}
+
+};
 
 
 class XCellDataComparator
@@ -74,6 +154,7 @@ public:
 
 typedef XLLCS<XCellDataComparator, XLCellDataProvider>       XLDataCompareClass;
 typedef XLLCS<XCellDataMaxComparator, XLCellDataProvider>    XLDataMaxCompareClass;
+typedef XLMalleablePairList                                  XLInsertableLinkedList;
 
 
 
@@ -82,23 +163,23 @@ typedef XLLCS<XCellDataMaxComparator, XLCellDataProvider>    XLDataMaxCompareCla
 
 class XLComparator
 {
-	RETURNTYPE             m_UnChangedRows;
-	RETURNTYPE             m_ChangedRows;
-	std::vector<int>       m_OnlyInA;
-	std::vector<int>       m_OnlyInB;
-	int                    m_R1;
-	int                    m_R2;
-	std::vector<int>       m_vUniqueKeys; //identifier key set
-	XLComparatorOperation  m_iOperationType;
-	XLCellDataContainer*   m_A;
-	XLCellDataContainer*   m_B;
+	RETURNTYPE                         m_UnChangedRows;
+	RETURNTYPE                         m_ChangedRows;
+	std::vector<int>                   m_OnlyInA;
+	std::vector<int>                   m_OnlyInB;
+	int                                m_R1;
+	int                                m_R2;
+	std::vector<int>                   m_vUniqueKeys; //identifier key set
+	XLComparatorOperation              m_iOperationType;
+	XLCellDataContainer*               m_A;
+	XLCellDataContainer*               m_B;
 public:
 	XLComparator(std::vector<int>& keys);
 	XLComparator();
 	~XLComparator(void);
 	bool Compare(XLCellDataContainer* A, XLCellDataContainer* B);
-	RETURNTYPE& UnChangedRows()   { return	m_UnChangedRows;}
-	RETURNTYPE& ChangedRows()	  { return	m_ChangedRows;}
+	RETURNTYPE& UnChangedRows()   { return	m_UnChangedRows; }
+	RETURNTYPE& ChangedRows()	  { return	m_ChangedRows; }
 	void Reset();
 	void SetOperationType(XLComparatorOperation op)
 	{
