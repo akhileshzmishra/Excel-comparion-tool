@@ -267,7 +267,7 @@ void IMergeProjectView::CreatePathBox()
 		Btnrect.left = myrect.right;
 		Btnrect.right = Btnrect.left + LOAD_BTN_W;
 		m_PathBtns[i].Create(NULL, WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, Btnrect, this, buttonIDs[i]);
-		m_PathBtns[i].LoadBitmap(IDB_BITMAP_TOOLTIPBTN_LOAD);
+		m_PathBtns[i].LoadBitmap(IDB_BITMAP_FILE_BTN_NEW);
 		CString text = L"Load a file";
 		m_PathBtns[i].SetToolTipText(&text);
 		m_PathBtns[i].ShowWindow(SW_SHOW);

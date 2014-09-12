@@ -29,6 +29,8 @@
 #define IDB_BITMAP_TOOLTIPBTN_LOAD      155
 #define IDD_OPTION_DLG                  156
 #define IDD_DIALOG4                     158
+#define IDB_BITMAP2                     159
+#define IDB_BITMAP_FILE_BTN_NEW         159
 #define IDC_EDITBOX_EBR                 1000
 #define IDC_EDIT1                       1001
 #define IDC_EDIT2                       1002
@@ -96,7 +98,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        159
+#define _APS_NEXT_RESOURCE_VALUE        160
 #define _APS_NEXT_COMMAND_VALUE         32819
 #define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           102
