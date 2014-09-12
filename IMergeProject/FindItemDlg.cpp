@@ -60,6 +60,7 @@ BEGIN_MESSAGE_MAP(CFindItemDlg, CDialog)
 	ON_WM_ACTIVATE()
 	//ON_BN_CLICKED(IDOK, &CFindItemDlg::OnBnClickedOk)
 	ON_EN_CHANGE(IDC_EDIT_KEYWORD, &CFindItemDlg::OnEnChangeEditKeyword)
+	ON_WM_SHOWWINDOW()
 END_MESSAGE_MAP()
 
 
@@ -186,5 +187,22 @@ void CFindItemDlg::OnEnChangeEditKeyword()
 		e->GetWindowTextW(m_KeywordStringValue);
 		std::wstring wstr(m_KeywordStringValue);
 		CSettingsSM::GetInstance()->SetUserString(wstr);
+	}
+}
+
+void CFindItemDlg::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	CDialog::OnShowWindow(bShow, nStatus);
+
+	// TODO: Add your message handler code here
+	CEdit* e = (CEdit*)GetDlgItem(IDC_EDIT_KEYWORD);
+	if(e)
+	{
+		std::wstring wstr = CSettingsSM::GetInstance()->GetUserString();
+		m_KeywordStringValue.SetString(wstr.c_str());
+		e->SetWindowTextW(m_KeywordStringValue);
+		e->SetFocus();
+		e->SetSel(0,-1);
+		e->SetSel(-1);
 	}
 }
