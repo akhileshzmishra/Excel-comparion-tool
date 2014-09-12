@@ -172,7 +172,7 @@ int IMergeProjectView::OnCreate(LPCREATESTRUCT lpcs)
 {
 	int ret = CView::OnCreate(lpcs); 	
 	CreateSideBar();
-	CreateGrid();
+	__CreateGridView();
 	CreatePathBox();
 	return ret;
 }
@@ -182,7 +182,7 @@ void IMergeProjectView::CreateSideBar()
 	m_SideBar.Create(this);
 }
 
-void IMergeProjectView::CreateGrid()
+void IMergeProjectView::__CreateGridView()
 {
 	if(m_pCreator)
 	{
@@ -401,8 +401,8 @@ void IMergeProjectView::OnFileCompare()
 					bResult = m_pCreator->Load();
 					if(bResult)
 					{
-						m_pCreator->CreateTable();
-						cResult = m_pCreator->Compare();
+						//m_pCreator->CreateTable();
+						cResult = m_pCreator->Compare(XLTableParamReloadTable);
 						Invalidate();
 						CSettingsSM::GetInstance()->StateAchieved(COMPARE_DONE);
 					}
@@ -460,7 +460,7 @@ void IMergeProjectView::OnPaint()
 	// Do not call CView::OnPaint() for painting messages
 	//if(m_iMode == CompareModeView)
 	{
-		//CreateGrid();
+		//__CreateGridView();
 		//OnFileCompare();
 	}
 	//else if(m_iMode == MergeModeView)
@@ -554,11 +554,20 @@ void IMergeProjectView::OnShowDifferenceOnly()
 	{
 		if(m_pCreator && GetFlag(SHOW_ONLY_DIFF_FLAG))
 		{
-			CompareResult cResult = m_pCreator->CreateDiffTable();
-			if(cResult == CompareResult_Success_NoChange)
+			m_CompareDlg = new OnCompDialogBox(this);
+			if(m_CompareDlg->CreateDlg(this) == TRUE)
 			{
-				AfxMessageBox(L"There are no changes in the files.");
+				m_CompareDlg->ShowWindow(SW_SHOW);
+				std::string loading("Populating the grid. Please Wait");
+				m_CompareDlg->SetDesc(loading);
+				CompareResult cResult = m_pCreator->CreateDiffTable();
+				if(cResult == CompareResult_Success_NoChange)
+				{
+					AfxMessageBox(L"Cannot show different view");
+				}
 			}
+			delete m_CompareDlg;
+			m_CompareDlg = 0;
 			CSettingsSM::GetInstance()->StateAchieved(SHOW_ONLY_DIFF);
 		}
 	}
@@ -576,7 +585,20 @@ void IMergeProjectView::OnShowSameOnly()
 	{
 		if(m_pCreator && GetFlag(SHOW_SAME_FLAG))
 		{
-			m_pCreator->CreateSameTable();
+			m_CompareDlg = new OnCompDialogBox(this);
+			if(m_CompareDlg->CreateDlg(this) == TRUE)
+			{
+				m_CompareDlg->ShowWindow(SW_SHOW);
+				std::string loading("Populating the grid. Please Wait");
+				m_CompareDlg->SetDesc(loading);
+				CompareResult cResult = m_pCreator->CreateSameTable();
+				if(cResult == CompareResult_Success_NoChange)
+				{
+					AfxMessageBox(L"Cannot show same view.");
+				}
+			}
+			delete m_CompareDlg;
+			m_CompareDlg = 0;
 			CSettingsSM::GetInstance()->StateAchieved(SHOW_SAME);
 		}
 	}
@@ -608,7 +630,20 @@ void IMergeProjectView::OnShowAll()
 	{
 		if(m_pCreator && GetFlag(SHOW_ALL_FLAG))
 		{
-			m_pCreator->CreateAllTable();
+			m_CompareDlg = new OnCompDialogBox(this);
+			if(m_CompareDlg->CreateDlg(this) == TRUE)
+			{
+				m_CompareDlg->ShowWindow(SW_SHOW);
+				std::string loading("Populating the grid. Please Wait");
+				m_CompareDlg->SetDesc(loading);
+				CompareResult cResult = m_pCreator->CreateAllTable();
+				if(cResult == CompareResult_Success_NoChange)
+				{
+					AfxMessageBox(L"Cannot show all view.");
+				}
+			}
+			delete m_CompareDlg;
+			m_CompareDlg = 0;
 			CSettingsSM::GetInstance()->StateAchieved(SHOW_ALL);
 		}
 	}
@@ -702,8 +737,8 @@ void IMergeProjectView::OnDestroy()
 {
 	try
 	{
-		bool left = m_PathTxtBox[0].IsDirty();
-		bool right = m_PathTxtBox[0].IsDirty();
+		bool left = SETTINGS_CLASS->GetFileAChanged();
+		bool right = SETTINGS_CLASS->GetFileBChanged();
 		if(left || right)
 		{
 			if(	m_AskBeforeExitDlg)
